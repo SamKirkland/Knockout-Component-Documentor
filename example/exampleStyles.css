@@ -27,14 +27,6 @@ div.col-sm-9 div {
 }
 
 
-.bs-example {
-	margin-right: 0;
-	margin-left: 0;
-	background-color: #F7F7F9;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-	padding: 10px 5px 0 5px;
-}
 
 .group {
 	background: #fff;
@@ -52,14 +44,6 @@ div.col-sm-9 div {
 	margin-bottom: 20px;
 }
 
-/*
-.bs-docs-sidebar .nav>li>ul {
-	display: none;
-}
-.bs-docs-sidebar .nav>li.active>ul {
-	display: block;
-}
-*/
 
 /* all links */
 .bs-docs-sidebar .nav>li>a {
@@ -100,63 +84,6 @@ div.col-sm-9 div {
 	font-weight: 500;
 }
 
-
-.color-swatch {
-	float: left;
-	width: 60px;
-	height: 60px;
-	margin: 0 5px 10px;
-	border-radius: 3px;
-	font-size: 11px;
-	line-height: 60px;
-	text-align: center;
-}
-
-
-.color-swatches {
-	color: #fff;
-}
-@media (min-width: 768px) {
-	.color-swatch {
-		width: 100px;
-		height: 100px;
-		line-height: 100px;
-		font-size: 14px;
-	}
-}
-
-.color-swatches .gray-darker {
-	background-color: #222;
-}
-.color-swatches .gray-dark {
-	background-color: #333;
-}
-.color-swatches .gray {
-	background-color: #555;
-}
-.color-swatches .gray-light {
-	background-color: #999;
-}
-.color-swatches .gray-lighter {
-	background-color: #eee;
-	color: #333;
-}
-
-.color-swatches .brand-primary {
-	background-color: #337ab7;
-}
-.color-swatches .brand-success {
-	background-color: #5cb85c;
-}
-.color-swatches .brand-warning {
-	background-color: #f0ad4e;
-}
-.color-swatches .brand-danger {
-	background-color: #d9534f;
-}
-.color-swatches .brand-info {
-	background-color: #5bc0de;
-}
 
 
 
@@ -223,12 +150,21 @@ div.col-sm-9 div {
 	margin: 0 -15px 0 -15px;
 }
 .list-group-item-title {
-    background: #ddd;
     position: absolute;
-    top: 0;
-    left: 10px;
-    padding: 2px 4px;
+    top: -2px;
+    left: -1px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    color: #9da0a4;
+    border-radius: 4px 0 4px 0;
 }
+
+
+
+
 .list-group-item-content {
 	padding-top: 30px;
 }

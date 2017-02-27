@@ -1,117 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<title>Knockout Component Preview Example</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
-	<!-- jquery -->
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-	
-	<!-- bootstrap -->
-	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<head>
+		<title>Knockout Component Preview Example</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		
+		<!-- jquery -->
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		
-	<link rel="stylesheet" href="codemirror.css">
-	<link rel="stylesheet" href="base16-dark.css">
-	<link rel="stylesheet" href="mdn-like.css">
-	<script src="codemirror.js"></script>
-	<script src="css.js"></script>
-	<script src="xml.js"></script>
-	<script src="javascript.js"></script>
-	<script src="htmlmixed.js"></script>
-	
-	<script src="clipboard.min.js"></script>
-	
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
+		<!-- bootstrap -->
+		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+			
+			
+		<link rel="stylesheet" href="codemirror.css">
+		<link rel="stylesheet" href="base16-dark.css">
+		<link rel="stylesheet" href="mdn-like.css">
+		<script src="codemirror.js"></script>
+		<script src="css.js"></script>
+		<script src="xml.js"></script>
+		<script src="javascript.js"></script>
+		<script src="htmlmixed.js"></script>
+		
+		<script src="clipboard.min.js"></script>
+		
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
 
-	<!-- Latest compiled and minified JavaScript -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
 
-	<script>
-		$(document).ready(function(){
-			setTimeout(function(){
-			$('.selectpicker').selectpicker({
-				showSubtext: true
+		<script>
+			$(document).ready(function(){
+				setTimeout(function(){
+					$('.selectpicker').selectpicker({
+						showSubtext: true
+					});
+					$('[data-spy="scroll"]').each(function () {
+						var $spy = $(this).scrollspy('refresh')
+					})
+				}, 1500);
 			});
-			}, 1500);
-		});
-	</script>
-	
-	<!-- knockout -->
-	<script src="../src/knockout-3.4.1.js"></script>
-	
-	<!-- knockout-component-preview -->
-	<script src="../src/knockout-component-preview.js"></script>
-	<link rel="stylesheet" href="exampleStyles.css">
-</head>
-<body data-spy="scroll" data-target="#myScrollspy" data-offset="0">
+		</script>
+		
+		<!-- knockout -->
+		<script src="../src/knockout-3.4.1.js"></script>
+		
+		<!-- knockout-component-preview -->
+		<script src="../src/knockout-component-preview.js"></script>
+		<link rel="stylesheet" href="exampleStyles.css">
+	</head>
+	<body data-spy="scroll" data-target="#myScrollspy" data-offset="0">
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-xs-3 col-lg-2" id="myScrollspy">
 					<div class="col-xs-3 col-lg-2 affix" style="margin-top:25px;">
-						<documentation-search params="showSearch: true"></documentation-search>
+						<documentation-search params="links: componentsToPreviewList, showSearch: true, domChange: domChangeEvent"></documentation-search>
 					</div>
 				</div>
 				
 				<!--Main Content -->
 				<div class="col-xs-9 col-lg-10">
-					<section id="style-guide" class="group ">
-						<h3>Style Guide</h3>
-						<div id="style-guide--colors" class="subgroup">
-							<h4>Colors</h4>
-							
-							<div class="bs-example">
-								<div class="color-swatches">
-									<div class="color-swatch gray-darker">gray-darker</div>
-									<div class="color-swatch gray-dark">gray-dark</div>
-									<div class="color-swatch gray">gray</div>
-									<div class="color-swatch gray-light">gray-light</div>
-									<div class="color-swatch gray-lighter">gray-lighter</div>
-									<div class="clearfix"></div>
-								</div>
-								<div class="color-swatches">
-									<div class="color-swatch brand-primary">gray-darker</div>
-									<div class="color-swatch brand-success">gray-dark</div>
-									<div class="color-swatch brand-warning">gray</div>
-									<div class="color-swatch brand-danger">gray-light</div>
-									<div class="color-swatch brand-info">gray-lighter</div>
-									<div class="clearfix"></div>
-								</div>
-							</div>
-							
-						</div>
-						<div id="style-guide--logos" class="subgroup">
-							<h4>Logos</h4>
-							
-							Logos here...
-							
-						</div>
-						<div id="style-guide--fonts" class="subgroup">
-							<h4>Fonts</h4>
-							
-							<h3>h3. The quick brown fox jumps over the lazy dog</h3>
-							<h4>h4. The quick brown fox jumps over the lazy dog</h4>
-							<h5>h5. The quick brown fox jumps over the lazy dog</h5>
-							<h6>h6. The quick brown fox jumps over the lazy dog</h6>
-						</div>
-					</section>
 					<section id="knockout-components" class="group">
 						<h3>Knockout Components</h3>
-						<div class="subgroup">
-							<h4>Group B Sub 1</h4>
-						</div>
 						
-						<knockout-component-preview params="autodocument: true, view: 'table'">
-						</knockout-component-preview>
-						
-						<hr />
-						
-						knockout-component-preview>
-							random-sample-component/random-sample-component
-						/knockout-component-preview>
+						<knockout-component-preview params="componentsToPreview: componentsToPreviewList, autodocument: true, view: 'table', view: 'dynamicEdit'"></knockout-component-preview>
 						
 					</section>
 				</div>
