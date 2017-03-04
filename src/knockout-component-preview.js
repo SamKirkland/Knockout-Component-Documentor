@@ -5,10 +5,12 @@ var types = {
 	},
 	object: '[object Object]',
 	date: '[object Date]',
+	dateTime: 'dateTime',
 	array: '[object Array]',
 	string: '[object String]',
 	boolean: '[object Boolean]',
 	number: '[object Number]',
+	json: 'json',
 	ko: {
 		observable: 'ko observable',
 		observableArray: 'ko observableArray'
@@ -28,9 +30,10 @@ ko.bindingHandlers.uniqueIdFunction = {
 		var uniqueID = idGen.getId();
 		$(element).attr("id", uniqueID);
 		
-		ko.unwrap(valueAccessor)()(element, allBindings, viewModel, bindingContext);
+		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
     } 
 };
+
 
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -71,11 +74,18 @@ function paramAsText(property) {
 	return JSON.stringify(property);
 }
 
-function codeEditorFunction(element, allBindings, viewModel, bindingContext) {
+function codeEditorFunction(element, valueAccessor, allBindings, viewModel, bindingContext) {
+	var bindingParams = ko.utils.unwrapObservable(valueAccessor());
+	
+	if (bindingParams.mode === "json") {
+		bindingParams.mode = { name: "javascript", json: true };
+	}
+	
 	var myCodeMirror = CodeMirror.fromTextArea(element, {
 		lineNumbers: true,
-		mode:  "htmlmixed",
+		mode: bindingParams.mode,
 		lineWrapping: true,
+		indentWithTabs: true,
 		theme: "mdn-like"
 	});
 }
@@ -145,6 +155,8 @@ myViewModelFactory.prototype = {
 			self.view("table");
 		};
 		
+		vm.description = ko.components.Cc[componentName].allParams.description;
+		vm.pages = ko.components.Cc[componentName].allParams.pages;
 		vm.params = ko.observableArray();
 		vm.paramsBindingsOnly = {};
 		vm.html = ko.computed(function(){
@@ -264,11 +276,8 @@ myViewModelFactory.prototype = {
 	componentParamVM: function(self, paramObj) {
 		var vm = this;
 		
-		vm.formType = types.get(paramObj.possibleValues || paramObj.defaultValue);
-		vm.formTypeText = ko.computed(function(){ // ToDo: use prototype
-			var regexResult = vm.formType.match(/\[\w+ (\w+)\]/);
-			return regexResult[1];
-		});
+		vm.formType = paramObj.type; //types.get(paramObj.possibleValues || paramObj.defaultValue);
+
 		vm.required = paramObj.required;
 		vm.description = paramObj.description || "";
 		vm.defaultValue = paramObj.defaultValue || "";
@@ -294,10 +303,10 @@ myViewModelFactory.prototype = {
 				vm.possibleValues.push(paramObj.possibleValues);
 			}
 		}
-		else {
-			vm.possibleValues.push("nothing defined...");
-			console.log("No possible values set");
-		}
+		//else {
+			//vm.possibleValues.push("nothing defined...");
+			//console.log("No possible values set");
+		//}
 		
 		// setup input placeholder text
 		vm.placeHolder = "";
@@ -315,8 +324,98 @@ myViewModelFactory.prototype = {
 
 
 $(document).ready(function(){
+	ko.components.register('knockout-type-editor', {
+		allParams: {
+			description: "Edit javascript or knockout types",
+			required: {
+				type: {
+					description: "A javascript or knockout type. The editor will edit that type",
+					type: types.string
+				}
+			},
+			optional: {}
+		},
+		viewModel: function(params) {
+			var vm = this;
+			
+			vm.valueBinding = ko.observable();
+			
+			vm.type = params.type;
+			vm.required = params.required;
+			vm.defaultValue = params.defaultValue;
+			vm.possibleValues = params.possibleValues;
+			
+			vm.colorizeData = function(data) {
+				var serialized = paramAsText(data);
+				
+				switch (types.get(data)) {
+					case types.number:
+						color = "#831a05";
+						break;
+						
+					case types.string:
+						color = "#235712";
+						break;
+						
+					case types.boolean:
+						color = "#0d7cca";
+						break;
+					
+					default:
+						color = "#bbb";
+				}
+				
+				return `<span style="color:${color};">${serialized}</span>`;
+			};
+			
+			return vm;
+		},
+		template: `
+			<!-- ko if: possibleValues !== undefined -->
+				POSSIBLE VALUES
+				<select class="selectpicker" data-width="100%"
+					data-bind="foreach: possibleValues, value: valueBinding, attr: { multiple: type === types.array }">
+					
+					<option data-bind="attr: { 'data-content': $parent.colorizeData($data), 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }"></option>
+				</select>
+			<!-- /ko -->
+			<!-- ko if: possibleValues === undefined -->
+				<!-- ko if: type === types.date -->
+					<input type="date" class="form-control">
+				<!-- /ko -->
+				<!-- ko if: type === types.dateTime -->
+					<input type="datetime-local" name="bdaytime">
+				<!-- /ko -->
+				<!-- ko if: type === types.array -->
+					Array editor...
+					<textarea class="html" data-bind="text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+				<!-- /ko -->
+				<!-- ko if: type === types.string -->
+					<input type="text" class="form-control" data-bind="value: defaultValue">
+				<!-- /ko -->
+				<!-- ko if: type === types.boolean -->
+					<div class="radio"><label><input type="radio" value="true"> true</label></div>
+					<div class="radio"><label><input type="radio" value="false"> false</label></div>
+				<!-- /ko -->
+				<!-- ko if: type === types.number -->
+					<input type="number" class="form-control">
+				<!-- /ko -->
+				<!-- ko if: type === types.object || type === types.json -->
+					<textarea class="html" data-bind="text: '{test:123}', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+				<!-- /ko -->
+				<!-- ko if: type === types.ko.observable -->
+					<textarea class="html" data-bind="text: 'ko.observable(true)', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+				<!-- /ko -->
+				<!-- ko if: type === types.ko.observableArray -->
+					<textarea class="html" data-bind="text: 'ko.observableArray([])', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+				<!-- /ko -->
+			<!-- /ko -->
+		`
+	});
+	
 	ko.components.register('knockout-component-preview', {
 		allParams: {
+			description: "Documents Knockout.js components",
 			required: {},
 			optional: {
 				componentsToPreview: {
@@ -327,8 +426,7 @@ $(document).ready(function(){
 				documentSelf: {
 					description: "should <knockout-component-preview> be included in the documentation output",
 					defaultValue: false,
-					type: types.boolean,
-					possibleValues: [true, false]
+					type: types.boolean
 				},
 				paramObjectName: {
 					description: "The name of the object the paramaters are set to within the knockout component",
@@ -344,8 +442,7 @@ $(document).ready(function(){
 				autoDocument: {
 					description: "Attempts to infer paramaters, types, and defaultValues of viewmodel",
 					defaultValue: false,
-					type: types.boolean,
-					possibleValues: [true, false]
+					type: types.boolean
 				}
 			}
 		},
@@ -360,17 +457,29 @@ $(document).ready(function(){
 					<div class="row">
 						<div class="col-xs-12 no-gutter">
 							<hr style="border-color: #ccc;">
-							<h4 class="componentTitle" data-bind="text: name"></h4>
-							
-							<div class="btn-group" role="group">
+							<div class="btn-group pull-right" role="group">
 								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'dynamicEdit' }, click: previewView">
 									<span class="glyphicon glyphicon-eye-open"></span> Preview
 								</button>
 								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
 									<span class="glyphicon glyphicon-list-alt"></span> Table
 								</button>
+								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
+									Page List <span class="label label-danger">123</span>
+								</button>
+								<!--
+									label-success label-info label-warning label-danger
+								-->
 							</div>
 							
+							<h4 class="componentTitle" data-bind="text: name"></h4>
+							
+							<ul data-bind="foreach: pages">
+								<li data-bind="text: $data"></li>
+							</ul>
+							
+							
+							<p data-bind="text: description"></p>
 							
 						</div>
 					</div>
@@ -393,7 +502,7 @@ $(document).ready(function(){
 											<td data-bind="text: name"></td>
 											<td data-bind="text: description"></td>
 											<td>
-												<div class="knockout-component-preview--dataType" data-bind="text: formTypeText"></div>
+												<div class="knockout-component-preview--dataType" data-bind="text: formType"></div>
 											</td>
 											<td data-bind="text: required"></td>
 											<td data-bind="text: defaultValue"></td>
@@ -408,16 +517,18 @@ $(document).ready(function(){
 							<!-- /ko -->
 							<!-- ko if: view() === 'dynamicEdit' -->
 								<div class="col-xs-6 col-lg-4 no-gutter">
-									<div class="list-group" data-bind="foreach: params">
-									
-										<div href="#" class="list-group-item">
-										
+									<div class="list-group params-list" data-bind="foreach: params">
+										<div class="list-group-item">
 											<div class="form-group">
-												<b>Default</b>
-												<span class="list-group-item-content" data-bind="text: defaultValue"></span>
-												<hr>
+												<h3>
+													<span data-bind="text: name"></span>
+													<span class="badge" data-bind="text: formType">New</span>
+												</h3>
 												
-												<label class="list-group-item-heading" for="ex1" data-bind="text: name"></label>
+												<p class="list-group-item-content" data-bind="text: description"></p>
+												
+												<knockout-type-editor params="type: formType, required: required, defaultValue: defaultValue, possibleValues: possibleValues"></knockout-type-editor>
+												
 												<!-- ko if: formType === types.array -->
 													<select class="selectpicker" data-width="100%" data-bind="foreach: possibleValues, value: valueBinding">
 														<option data-bind="attr: { 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }, text: $data"></option>
@@ -443,16 +554,10 @@ $(document).ready(function(){
 													<input type="number" class="form-control" data-bind="textInput: valueBinding" id="ex1">
 												<!-- /ko -->
 											</div>
-											<div class="list-group-item-text list-group-item">
-												<b class="list-group-item-title">Description</b>
-												<span class="list-group-item-content" data-bind="text: description"></span>
-											</div>
 										</div>
-										
 									</div>
 								</div>
 								<div class="col-xs-6 col-lg-8 no-gutter-right" style="display:flex;flex-direction:column;">
-									
 									<div class="panel panel-default" style="flex: 1 0">
 										<div class="panel-heading">Preview</div>
 										<div class="panel-body" style="position: relative;">
@@ -461,28 +566,42 @@ $(document).ready(function(){
 									</div>
 									<div class="panel panel-default" style="flex: 0 1">
 										<div class="panel-heading">
-											Code
+											Include Tags
 											
 											<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
 												<span class="glyphicon glyphicon-copy"></span> Copy
 											</div>
 										</div>
 										<div class="panel-body" style="padding:0;">
-											<textarea class="html" data-bind="text: html, uniqueIdFunction: codeEditorFunction"></textarea>
+											<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
 										</div>
 									</div>
-									
+									<div class="panel panel-default" style="flex: 0 1">
+										<div class="panel-heading">
+											Component Code
+											
+											<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
+												<span class="glyphicon glyphicon-copy"></span> Copy
+											</div>
+										</div>
+										<div class="panel-body" style="padding:0;">
+											<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
+										</div>
+									</div>
 								</div>
 								<div class="clearfix"></div>
 							<!-- /ko -->
 						</div>
 					</div>
 				</div>
-			</div>`
+			</div>
+		`
 	});
 	
 	ko.components.register('random-sample-component', {
 		allParams: {
+			description: "This is a sample component to show the usage of <knockout-component-preview> - you can test one of each editor.",
+			pages: ["/page1.html", "/page2.html", "/page3.html"],
 			required: {},
 			optional: {
 				paramText: {
@@ -506,6 +625,26 @@ $(document).ready(function(){
 					description: "The border size in pixels of the border",
 					defaultValue: 0,
 					type: types.number
+				},
+				jsonParam: {
+					description: "JSON editor",
+					defaultValue: JSON.stringify({ ttest: 'json value', test_2: 123 }),
+					type: types.json
+				},
+				koObservable: {
+					description: "knockout observable",
+					defaultValue: "something",
+					type: types.ko.observable
+				},
+				koObservableArray: {
+					description: "knockout observableArray",
+					defaultValue: "something",
+					type: types.ko.observableArray
+				},
+				jsArray: {
+					description: "js array",
+					defaultValue: "something",
+					type: types.array
 				}
 			}
 		},
