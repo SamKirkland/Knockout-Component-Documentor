@@ -1,21 +1,3 @@
-// ex: types.get(prop) == types.number
-var types = {
-	get: function(prop) {
-		return Object.prototype.toString.call(prop);
-	},
-	object: '[object Object]',
-	date: '[object Date]',
-	dateTime: 'dateTime',
-	array: '[object Array]',
-	string: '[object String]',
-	boolean: '[object Boolean]',
-	number: '[object Number]',
-	json: 'json',
-	ko: {
-		observable: 'ko observable',
-		observableArray: 'ko observableArray'
-	}
-}
 
 function Generator() {};
 Generator.prototype.rand =  Math.floor(Math.random() * 26) + Date.now();
@@ -33,7 +15,6 @@ ko.bindingHandlers.uniqueIdFunction = {
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
     } 
 };
-
 
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -62,18 +43,6 @@ ko.bindingHandlers.clipboard = {
 	}
 };
 
-function paramAsText(property) {
-	if (property === undefined) {
-		return "undefined";
-	}
-	
-	if (types.get(property) === types.number) {
-		return property;
-	}
-	
-	return JSON.stringify(property);
-}
-
 function codeEditorFunction(element, valueAccessor, allBindings, viewModel, bindingContext) {
 	var bindingParams = ko.utils.unwrapObservable(valueAccessor());
 	
@@ -81,11 +50,17 @@ function codeEditorFunction(element, valueAccessor, allBindings, viewModel, bind
 		bindingParams.mode = { name: "javascript", json: true };
 	}
 	
+	if (bindingParams.readOnly === undefined) {
+		bindingParams.readOnly = false;
+	}
+	
 	var myCodeMirror = CodeMirror.fromTextArea(element, {
 		lineNumbers: true,
 		mode: bindingParams.mode,
+		readOnly: bindingParams.readOnly,
 		lineWrapping: true,
 		indentWithTabs: true,
+		matchBrackets: true,
 		theme: "mdn-like"
 	});
 }
@@ -105,7 +80,6 @@ var myViewModelFactory = function(params, componentInfo) {
 	//self.paramObject = ko.computed(functions.createParamObject(), this);
 	
 	self.allComponentsAdded = function(parent) {
-		console.log('parent added', parent);
 		if (parent.domChangeEvent !== undefined) {
 			parent.domChangeEvent(true);
 		}
@@ -119,7 +93,7 @@ var myViewModelFactory = function(params, componentInfo) {
 	
 	// you can preview all registered components if autodocument is true
 	//if (self.autodocument) {
-		functions.previewAllRegisteredComponents(self);
+		functions.previewAllRegisteredComponents(params, self);
 	//}
 	
 	// you can preview the component you pass into this component
@@ -131,8 +105,9 @@ var myViewModelFactory = function(params, componentInfo) {
 };
 
 myViewModelFactory.prototype = {
-	componentPreview: function(self, componentName) { // the viewmodel to hold all info needed to preview a component
+	componentPreview: function(parentParams, self, componentName) { // the viewmodel to hold all info needed to preview a component
 		var vm = this;
+		
 		
 		if (!ko.components.isRegistered(componentName)) {
 			throw `The component <${componentName}> isn't registered.`;
@@ -181,6 +156,15 @@ myViewModelFactory.prototype = {
 			
 			return `<${vm.name} params='${paramsText}'></${vm.name}>`;
 		});
+		
+		// script tag generator
+		if (parentParams.includeFn) {
+			vm.htmlInclude = parentParams.includeFn(componentName);
+		}
+		else {
+			vm.htmlInclude = `<script src="/js/${componentName}.js"></script>`;
+		}
+		
 		vm.view = self.view;
 		
 		// add the paramaters to the paramater list
@@ -201,7 +185,7 @@ myViewModelFactory.prototype = {
 		
 		return vm;
 	},
-	previewAllRegisteredComponents: function(self) {
+	previewAllRegisteredComponents: function(parentParams, self) {
 		$.each(ko.components.Cc, function(componentName, componentObj) {
 			if (!window.hasDocumentedSelf) { // Create a object to store components that have already been documented
 				window.hasDocumentedSelf = {};
@@ -209,7 +193,7 @@ myViewModelFactory.prototype = {
 			
 			try {
 				if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
-					self.componentsToPreview.push(new self.componentPreview(self, componentName));
+					self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName));
 					window.hasDocumentedSelf[componentName] = true;
 				}
 			}
@@ -321,428 +305,197 @@ myViewModelFactory.prototype = {
 	}
 };
 
-
-
-$(document).ready(function(){
-	ko.components.register('knockout-type-editor', {
-		allParams: {
-			description: "Edit javascript or knockout types",
-			required: {
-				type: {
-					description: "A javascript or knockout type. The editor will edit that type",
-					type: types.string
-				}
+ko.components.register('knockout-component-preview', {
+	allParams: {
+		description: "Documents Knockout.js components",
+		required: {},
+		optional: {
+			componentsToPreview: {
+				description: "The ko.observableArray that will be updated with components being previewed",
+				defaultValue: undefined,
+				type: types.ko.observableArray
 			},
-			optional: {}
-		},
-		viewModel: function(params) {
-			var vm = this;
-			
-			vm.valueBinding = ko.observable();
-			
-			vm.type = params.type;
-			vm.required = params.required;
-			vm.defaultValue = params.defaultValue;
-			vm.possibleValues = params.possibleValues;
-			
-			vm.colorizeData = function(data) {
-				var serialized = paramAsText(data);
-				
-				switch (types.get(data)) {
-					case types.number:
-						color = "#831a05";
-						break;
-						
-					case types.string:
-						color = "#235712";
-						break;
-						
-					case types.boolean:
-						color = "#0d7cca";
-						break;
-					
-					default:
-						color = "#bbb";
-				}
-				
-				return `<span style="color:${color};">${serialized}</span>`;
-			};
-			
-			return vm;
-		},
-		template: `
-			<!-- ko if: possibleValues !== undefined -->
-				POSSIBLE VALUES
-				<select class="selectpicker" data-width="100%"
-					data-bind="foreach: possibleValues, value: valueBinding, attr: { multiple: type === types.array }">
-					
-					<option data-bind="attr: { 'data-content': $parent.colorizeData($data), 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }"></option>
-				</select>
-			<!-- /ko -->
-			<!-- ko if: possibleValues === undefined -->
-				<!-- ko if: type === types.date -->
-					<input type="date" class="form-control">
-				<!-- /ko -->
-				<!-- ko if: type === types.dateTime -->
-					<input type="datetime-local" name="bdaytime">
-				<!-- /ko -->
-				<!-- ko if: type === types.array -->
-					Array editor...
-					<textarea class="html" data-bind="text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
-				<!-- /ko -->
-				<!-- ko if: type === types.string -->
-					<input type="text" class="form-control" data-bind="value: defaultValue">
-				<!-- /ko -->
-				<!-- ko if: type === types.boolean -->
-					<div class="radio"><label><input type="radio" value="true"> true</label></div>
-					<div class="radio"><label><input type="radio" value="false"> false</label></div>
-				<!-- /ko -->
-				<!-- ko if: type === types.number -->
-					<input type="number" class="form-control">
-				<!-- /ko -->
-				<!-- ko if: type === types.object || type === types.json -->
-					<textarea class="html" data-bind="text: '{test:123}', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
-				<!-- /ko -->
-				<!-- ko if: type === types.ko.observable -->
-					<textarea class="html" data-bind="text: 'ko.observable(true)', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
-				<!-- /ko -->
-				<!-- ko if: type === types.ko.observableArray -->
-					<textarea class="html" data-bind="text: 'ko.observableArray([])', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
-				<!-- /ko -->
-			<!-- /ko -->
-		`
-	});
-	
-	ko.components.register('knockout-component-preview', {
-		allParams: {
-			description: "Documents Knockout.js components",
-			required: {},
-			optional: {
-				componentsToPreview: {
-					description: "The ko.observableArray that will be updated with components being previewed",
-					defaultValue: undefined,
-					type: types.ko.observableArray
-				},
-				documentSelf: {
-					description: "should <knockout-component-preview> be included in the documentation output",
-					defaultValue: false,
-					type: types.boolean
-				},
-				paramObjectName: {
-					description: "The name of the object the paramaters are set to within the knockout component",
-					defaultValue: "allParams",
-					type: types.string
-				},
-				view: {
-					description: "Determines which view to show onload",
-					defaultValue: "dynamicEdit",
-					type: types.string,
-					possibleValues: ["dynamicEdit", "table"]
-				},
-				autoDocument: {
-					description: "Attempts to infer paramaters, types, and defaultValues of viewmodel",
-					defaultValue: false,
-					type: types.boolean
-				}
+			documentSelf: {
+				description: "should <knockout-component-preview> be included in the documentation output",
+				defaultValue: false,
+				type: types.boolean
+			},
+			paramObjectName: {
+				description: "The name of the object the paramaters are set to within the knockout component",
+				defaultValue: "allParams",
+				type: types.string
+			},
+			view: {
+				description: "Determines which view to show onload",
+				defaultValue: "dynamicEdit",
+				type: types.string,
+				possibleValues: ["dynamicEdit", "table"]
+			},
+			autoDocument: {
+				description: "Attempts to infer paramaters, types, and defaultValues of viewmodel",
+				defaultValue: false,
+				type: types.boolean
+			},
+			includeFn: {
+				description: "A function used transform the component name into your include tags.",
+				defaultValue: function(componentName){ return `<script src="/js/${includeFn}.js"></script>`; },
+				type: types.function
 			}
-		},
-		viewModel: {
-			createViewModel: function(params, componentInfo) {
-				return new myViewModelFactory(params, componentInfo);
-			}
-		},
-		template: `
-			<div class="subgroup container-fluid" data-bind="foreach: { data: componentsToPreview, afterRender: allComponentsAdded($parent) }">
-				<div data-bind="attr: { 'id': componentID }">
-					<div class="row">
-						<div class="col-xs-12 no-gutter">
-							<hr style="border-color: #ccc;">
-							<div class="btn-group pull-right" role="group">
-								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'dynamicEdit' }, click: previewView">
-									<span class="glyphicon glyphicon-eye-open"></span> Preview
-								</button>
-								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
-									<span class="glyphicon glyphicon-list-alt"></span> Table
-								</button>
-								<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
-									Page List <span class="label label-danger">123</span>
-								</button>
-								<!--
-									label-success label-info label-warning label-danger
-								-->
-							</div>
-							
-							<h4 class="componentTitle" data-bind="text: name"></h4>
-							
-							<ul data-bind="foreach: pages">
-								<li data-bind="text: $data"></li>
-							</ul>
-							
-							
-							<p data-bind="text: description"></p>
-							
+		}
+	},
+	viewModel: {
+		createViewModel: function(params, componentInfo) {
+			return new myViewModelFactory(params, componentInfo);
+		}
+	},
+	template: `
+		<div class="subgroup container-fluid" data-bind="foreach: { data: componentsToPreview, afterRender: allComponentsAdded($parent) }">
+			<div data-bind="attr: { 'id': componentID }">
+				<div class="row">
+					<div class="col-xs-12 no-gutter">
+						<hr style="border-color: #ccc;">
+						<div class="btn-group pull-right" role="group">
+							<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'dynamicEdit' }, click: previewView">
+								<span class="glyphicon glyphicon-eye-open"></span> Preview
+							</button>
+							<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
+								<span class="glyphicon glyphicon-list-alt"></span> Table
+							</button>
+							<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
+								Page List <span class="label label-danger">123</span>
+							</button>
+							<!--
+								label-success label-info label-warning label-danger
+							-->
 						</div>
+						
+						<h4 class="componentTitle" data-bind="text: name"></h4>
+						
+						<ul data-bind="foreach: pages">
+							<li data-bind="text: $data"></li>
+						</ul>
+						
+						
+						<p data-bind="text: description"></p>
+						
 					</div>
-					<div class="row row-eq-height">
-						<div class="col-xs-12 no-gutter row-eq-height">
-							<!-- ko if: view() === 'table' -->
-								<table class="table table-striped table-bordered table-hover table-condensed">
-									<thead>
-										<tr>
-											<th>Parameter Name</th>
-											<th>Description</th>
-											<th>Type</th>
-											<th>Required</th>
-											<th>Default</th>
-											<th>Possible Values</th>
-										</tr>
-									</thead>
-									<tbody data-bind="foreach: params">
-										<tr>
-											<td data-bind="text: name"></td>
-											<td data-bind="text: description"></td>
-											<td>
-												<div class="knockout-component-preview--dataType" data-bind="text: formType"></div>
-											</td>
-											<td data-bind="text: required"></td>
-											<td data-bind="text: defaultValue"></td>
-											<td data-bind="foreach: possibleValues">
-												<div class="knockout-component-preview--dataType">
-													<span data-bind="text: paramAsText($data)"></span>
+				</div>
+				<div class="row row-eq-height">
+					<div class="col-xs-12 no-gutter row-eq-height">
+						<!-- ko if: view() === 'table' -->
+							<table class="table table-striped table-bordered table-hover table-condensed">
+								<thead>
+									<tr>
+										<th>Parameter Name</th>
+										<th>Description</th>
+										<th>Type</th>
+										<th>Required</th>
+										<th>Default</th>
+										<th>Possible Values</th>
+									</tr>
+								</thead>
+								<tbody data-bind="foreach: params">
+									<tr>
+										<td data-bind="text: name"></td>
+										<td data-bind="text: description"></td>
+										<td>
+											<div class="knockout-component-preview--dataType" data-bind="text: formType"></div>
+										</td>
+										<td data-bind="text: required"></td>
+										<td data-bind="text: defaultValue"></td>
+										<td data-bind="foreach: possibleValues">
+											<div class="knockout-component-preview--dataType">
+												<span data-bind="text: paramAsText($data)"></span>
+											</div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						<!-- /ko -->
+						<!-- ko if: view() === 'dynamicEdit' -->
+							<div class="col-xs-6 col-lg-4 no-gutter">
+								<div class="list-group params-list" data-bind="foreach: params">
+									<div class="list-group-item">
+										<div class="form-group">
+											<h3>
+												<span data-bind="text: name"></span>
+												<span class="badge" data-bind="text: formType">New</span>
+											</h3>
+											
+											<p class="list-group-item-content" data-bind="text: description"></p>
+											
+											<knockout-type-editor params="type: formType, required: required, defaultValue: defaultValue, possibleValues: possibleValues"></knockout-type-editor>
+											
+											<!-- ko if: formType === types.array -->
+												<select class="selectpicker" data-width="100%" data-bind="foreach: possibleValues, value: valueBinding">
+													<option data-bind="attr: { 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }, text: $data"></option>
+												</select>
+											<!-- /ko -->
+											<!-- ko if: formType === types.string -->
+												<input data-bind="textInput: valueBinding, attr: { 'required': required, 'placeholder': placeHolder }"
+													type="text" class="form-control" id="ex1">
+											<!-- /ko -->
+											<!-- ko if: formType === types.boolean -->
+												<div class="radio">
+													<label>
+														<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex01" value="true"> true
+													</label>
 												</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							<!-- /ko -->
-							<!-- ko if: view() === 'dynamicEdit' -->
-								<div class="col-xs-6 col-lg-4 no-gutter">
-									<div class="list-group params-list" data-bind="foreach: params">
-										<div class="list-group-item">
-											<div class="form-group">
-												<h3>
-													<span data-bind="text: name"></span>
-													<span class="badge" data-bind="text: formType">New</span>
-												</h3>
-												
-												<p class="list-group-item-content" data-bind="text: description"></p>
-												
-												<knockout-type-editor params="type: formType, required: required, defaultValue: defaultValue, possibleValues: possibleValues"></knockout-type-editor>
-												
-												<!-- ko if: formType === types.array -->
-													<select class="selectpicker" data-width="100%" data-bind="foreach: possibleValues, value: valueBinding">
-														<option data-bind="attr: { 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }, text: $data"></option>
-													</select>
-												<!-- /ko -->
-												<!-- ko if: formType === types.string -->
-													<input data-bind="textInput: valueBinding, attr: { 'required': required, 'placeholder': placeHolder }"
-														type="text" class="form-control" id="ex1">
-												<!-- /ko -->
-												<!-- ko if: formType === types.boolean -->
-													<div class="radio">
-														<label>
-															<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex01" value="true"> true
-														</label>
-													</div>
-													<div class="radio">
-														<label>
-															<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex02" value="false"> false
-														</label>
-													</div>
-												<!-- /ko -->
-												<!-- ko if: formType === types.number -->
-													<input type="number" class="form-control" data-bind="textInput: valueBinding" id="ex1">
-												<!-- /ko -->
-											</div>
+												<div class="radio">
+													<label>
+														<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex02" value="false"> false
+													</label>
+												</div>
+											<!-- /ko -->
+											<!-- ko if: formType === types.number -->
+												<input type="number" class="form-control" data-bind="textInput: valueBinding" id="ex1">
+											<!-- /ko -->
 										</div>
 									</div>
 								</div>
-								<div class="col-xs-6 col-lg-8 no-gutter-right" style="display:flex;flex-direction:column;">
-									<div class="panel panel-default" style="flex: 1 0">
-										<div class="panel-heading">Preview</div>
-										<div class="panel-body" style="position: relative;">
-											<div data-bind='component: { name: name, params: paramsBindingsOnly }'></div>
-										</div>
-									</div>
-									<div class="panel panel-default" style="flex: 0 1">
-										<div class="panel-heading">
-											Include Tags
-											
-											<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
-												<span class="glyphicon glyphicon-copy"></span> Copy
-											</div>
-										</div>
-										<div class="panel-body" style="padding:0;">
-											<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
-										</div>
-									</div>
-									<div class="panel panel-default" style="flex: 0 1">
-										<div class="panel-heading">
-											Component Code
-											
-											<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
-												<span class="glyphicon glyphicon-copy"></span> Copy
-											</div>
-										</div>
-										<div class="panel-body" style="padding:0;">
-											<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
-										</div>
+							</div>
+							<div class="col-xs-6 col-lg-8 no-gutter-right" style="display:flex;flex-direction:column;">
+								<div class="panel panel-default" style="flex: 1 0">
+									<div class="panel-heading">Preview</div>
+									<div class="panel-body" style="position: relative;">
+										<div data-bind='component: { name: name, params: paramsBindingsOnly }'></div>
 									</div>
 								</div>
-								<div class="clearfix"></div>
-							<!-- /ko -->
-						</div>
+								<div class="panel panel-default" style="flex: 0 1">
+									<div class="panel-heading">
+										Include Tags
+										
+										<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
+											<span class="glyphicon glyphicon-copy"></span> Copy
+										</div>
+									</div>
+									<div class="panel-body" style="padding:0;">
+										<textarea class="html" data-bind="text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }"></textarea>
+									</div>
+								</div>
+								<div class="panel panel-default" style="flex: 0 1">
+									<div class="panel-heading">
+										Component Code
+										
+										<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
+											<span class="glyphicon glyphicon-copy"></span> Copy
+										</div>
+									</div>
+									<div class="panel-body" style="padding:0;">
+										<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
+									</div>
+								</div>
+							</div>
+							<div class="clearfix"></div>
+						<!-- /ko -->
 					</div>
 				</div>
 			</div>
-		`
-	});
-	
-	ko.components.register('random-sample-component', {
-		allParams: {
-			description: "This is a sample component to show the usage of <knockout-component-preview> - you can test one of each editor.",
-			pages: ["/page1.html", "/page2.html", "/page3.html"],
-			required: {},
-			optional: {
-				paramText: {
-					description: "The text to appear within a component",
-					defaultValue: "oops",
-					type: types.string,
-					possibleValues: [123, true, false, null, undefined, "oops", "poops", "woops", "unicorn poo", "Ex3"]
-				},
-				showBorder: {
-					description: "Show a border around the demo component",
-					defaultValue: true,
-					type: types.boolean
-				},
-				dropdown: {
-					description: "The border size in pixels of the border",
-					defaultValue: "none",
-					type: types.string,
-					possibleValues: [0, "none", "somethingElse"]
-				},
-				borderWidth: {
-					description: "The border size in pixels of the border",
-					defaultValue: 0,
-					type: types.number
-				},
-				jsonParam: {
-					description: "JSON editor",
-					defaultValue: JSON.stringify({ ttest: 'json value', test_2: 123 }),
-					type: types.json
-				},
-				koObservable: {
-					description: "knockout observable",
-					defaultValue: "something",
-					type: types.ko.observable
-				},
-				koObservableArray: {
-					description: "knockout observableArray",
-					defaultValue: "something",
-					type: types.ko.observableArray
-				},
-				jsArray: {
-					description: "js array",
-					defaultValue: "something",
-					type: types.array
-				}
-			}
-		},
-		viewModel: function(params) {
-			this.paramText = params.paramText;
-			this.borderWidth = params.borderWidth;
-			this.allParams = ko.computed(function(){
-				return JSON.stringify(params);
-			});
-		},
-		template: `
-			Just some silly demo component.<br>
-			The value of paramText: <span style="border-color:green;border-style:solid;" data-bind="text: paramText"></span><br>
-			<b>borderWidth:</b> <span data-bind="text: borderWidth"></span><br>
-			<b>allParams:</b> <span data-bind="text: allParams"></span>
-		`
-	});
-	
-	// Automatically builds out the documentation navigation
-	ko.components.register('documentation-search', {
-		allParams: {
-			required: {
-				links: {
-					description: "A ko.observableArray of list items to show in the navigation",
-					type: types.ko.observableArray
-				}
-			},
-			optional: {
-				showSearch: {
-					description: "To display the search above the navigation",
-					defaultValue: true,
-					type: types.boolean
-				},
-				placeholderText: {
-					description: "The default text to display in the search box",
-					defaultValue: "Search for...",
-					type: types.string
-				}
-			}
-		},
-		viewModel: function(params) {
-			var self = this;
-			
-			if (params.domChange !== undefined) {
-				self.domChange = params.domChange;
-				self.domChange.subscribe(function(newValue) {
-					// update the documentation component
-					$('[data-spy="scroll"]').each(function () {
-						$(this).scrollspy('refresh');
-					});
-				});
-			}
-			
-			self.showSearch = params.showSearch;
-			self.searchInput = ko.observable("");
-			
-			// Search text, defaults to "Search for..."
-			if (params.placeholderText !== "") {
-				self.placeholderText = params.placeholderText;
-			}
-			else {
-				self.placeholderText = "Search for...";
-			}
-			
-			self.links = params.links;
-			self.filteredLinks = self.links;
-			/*
-			self.filteredLinks = ko.computed(function(){
-				var searchingText = self.searchInput().toLowerCase();
-				if (self.links !== undefined) {
-					self.links().forEach(function(link){
-						var foundMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
-						link.visible(foundMatch);
-					});
-				}
-			});
-			*/
-		},
-		template: `
-			<div class="form-group" data-bind="visible: showSearch">
-				<input type="text" class="form-control" data-bind="attr: { placeholder: placeholderText }"
-					data-bind="textInput: searchInput">
-				<span class="input-group-btn"></span>
-			</div>
-		
-			<nav class="bs-docs-sidebar">
-				<ul class="nav">
-					<li>
-						<a href="#knockoutComponents">Knockout Components</a> 
-						<ul class="nav" data-bind="foreach: filteredLinks">
-							<li><a data-bind="attr: { href: '#' + componentID }, text: name, visible: visible"></a></li>
-						</ul>
-					</li>
-				</ul>
-			</nav>
-		`
-	});
-	
+		</div>
+	`
+});
+
+$(document).ready(function(){
 	var pageVM = function() {
 		var vm = this;
 		
