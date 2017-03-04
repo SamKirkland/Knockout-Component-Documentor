@@ -1,6 +1,4 @@
-# CSS Web Browsers
-
-[Demo](http://samkirkland.com/labs/Knockout-Component-Preview/index.html)
+# Knockout Component Preview
 
 ## Description:
 
@@ -20,7 +18,7 @@ https://github.com/SamKirkland/Knockout-Component-Preview
 
 2. Add the CSS and JS on your page:
 ```html
-<link rel="stylesheet" type="text/css" href="css/knockout-component-preview.css" />
+<link rel="stylesheet" type="text/css" href="knockout-component-preview.css" />
 <script src="clipboard.min.js"></script>
 <script src="knockout-component-preview.js"></script>
 ```
@@ -29,11 +27,6 @@ https://github.com/SamKirkland/Knockout-Component-Preview
 ```html
 <knockout-component-preview></knockout-component-preview>
 ```
-
-## Documentation
-
-[Available here](http://samkirkland.com/labs/Knockout-Component-Preview/index.html)
-This component documents it's self. To see the documentation go to the demo page linked above.
 
 ## License:
 
