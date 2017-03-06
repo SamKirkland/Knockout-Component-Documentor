@@ -2,7 +2,8 @@
 ko.components.register('random-sample-component', {
 	allParams: {
 		description: "This is a sample component to show the usage of <knockout-component-preview> - you can test one of each editor.",
-		pages: ["/page1.html", "/page2.html", "/page3.html"],
+		tags: ["demo", "example", "tag", "test"],
+		pages: ["/page1.html", "/page2.html", "/page3.html", "/page4.html", "/page5.html"],
 		required: {},
 		optional: {
 			paramText: {

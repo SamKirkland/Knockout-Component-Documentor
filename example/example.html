@@ -68,6 +68,7 @@
 						<h3>Knockout Components</h3>
 						
 						<knockout-component-preview params="
+							documentSelf: true,
 							componentsToPreview: componentsToPreviewList,
 							includeFn: function(componentName){ return `// Add to the top of the page you would like to use the component\r<script src='/yourCustomFolder/${componentName}.js'></script>`; }
 						"></knockout-component-preview>

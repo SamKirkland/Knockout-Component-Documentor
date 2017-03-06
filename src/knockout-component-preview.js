@@ -70,7 +70,7 @@ var myViewModelFactory = function(params, componentInfo) {
 	var functions = this; // this is just an alias for the protoype methods defined below
 	
 	// view params
-	self.view = ko.observable(params.view || "dynamicEdit");
+	//self.view = ko.observable(params.view || "dynamicEdit");
 	
 	// This grabs the wrapping viewmodel. ToDo: Pass int $parent instead of doing this
 	//self.parentVM = ko.dataFor($(componentInfo.element).parent()[0]);
@@ -78,6 +78,8 @@ var myViewModelFactory = function(params, componentInfo) {
 	self.paramList = ko.observableArray();
 	self.componentsToPreview = params.componentsToPreview || ko.observableArray();
 	//self.paramObject = ko.computed(functions.createParamObject(), this);
+	
+	self.documentSelf = params.documentSelf;
 	
 	self.allComponentsAdded = function(parent) {
 		if (parent.domChangeEvent !== undefined) {
@@ -108,7 +110,6 @@ myViewModelFactory.prototype = {
 	componentPreview: function(parentParams, self, componentName) { // the viewmodel to hold all info needed to preview a component
 		var vm = this;
 		
-		
 		if (!ko.components.isRegistered(componentName)) {
 			throw `The component <${componentName}> isn't registered.`;
 		}
@@ -124,14 +125,36 @@ myViewModelFactory.prototype = {
 		vm.view = ko.observable(self.view || "dynamicEdit");
 		
 		vm.previewView = function() {
-			self.view("dynamicEdit");
+			vm.view("dynamicEdit");
 		};
 		vm.tableView = function() {
-			self.view("table");
+			vm.view("table");
 		};
 		
 		vm.description = ko.components.Cc[componentName].allParams.description;
-		vm.pages = ko.components.Cc[componentName].allParams.pages;
+		
+		vm.tags = ko.observableArray(ko.components.Cc[componentName].allParams.tags);
+		
+		vm.pages = ko.observable(ko.components.Cc[componentName].allParams.pages);
+		vm.pageCount = ko.computed(function(){
+			if (vm.pages() === undefined) {
+				return 0;
+			}
+			else {
+				return vm.pages().length;
+			}
+		});
+		vm.pageCountClass = ko.computed(function(){
+			if (vm.pageCount() < 3) {
+				return "label-success";
+			}
+			if (vm.pageCount() < 6) {
+				return "label-warning";
+			}
+			
+			return "label-danger";
+		});
+		
 		vm.params = ko.observableArray();
 		vm.paramsBindingsOnly = {};
 		vm.html = ko.computed(function(){
@@ -165,8 +188,6 @@ myViewModelFactory.prototype = {
 			vm.htmlInclude = `<script src="/js/${componentName}.js"></script>`;
 		}
 		
-		vm.view = self.view;
-		
 		// add the paramaters to the paramater list
 		
 		// ToDo: combine into one loop
@@ -191,14 +212,20 @@ myViewModelFactory.prototype = {
 				window.hasDocumentedSelf = {};
 			}
 			
-			try {
-				if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
-					self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName));
-					window.hasDocumentedSelf[componentName] = true;
+			var dependentComponents = ["knockout-component-preview", "knockout-type-editor", "documentation-search"];
+			
+			var shouldDocumentThisComponent = dependentComponents.indexOf(componentName) === -1 || self.documentSelf === true;
+			
+			if (shouldDocumentThisComponent) {
+				try {
+						if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
+							self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName));
+							window.hasDocumentedSelf[componentName] = true;
+						}
 				}
-			}
-			catch (error) {
-				console.log(error);
+				catch (error) {
+					console.log(error);
+				}
 			}
 		})
 	},
@@ -361,22 +388,30 @@ ko.components.register('knockout-component-preview', {
 							<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
 								<span class="glyphicon glyphicon-list-alt"></span> Table
 							</button>
-							<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'table' }, click: tableView">
-								Page List <span class="label label-danger">123</span>
-							</button>
-							<!--
-								label-success label-info label-warning label-danger
-							-->
 						</div>
 						
-						<h4 class="componentTitle" data-bind="text: name"></h4>
+						<h4 style="margin-bottom:0;" class="componentTitle" data-bind="text: name"></h4>
 						
-						<ul data-bind="foreach: pages">
-							<li data-bind="text: $data"></li>
-						</ul>
+						<!-- ko if: tags().length -->
+							<div style="display:inline-block;margin:5px 0 10px 0;" data-bind="foreach: tags">
+								<span class="label label-default" data-bind="text: $data"></span>
+							</div>
+						<!-- /ko -->
 						
+						<blockquote data-bind="visible: description, text: description"></blockquote>
 						
-						<p data-bind="text: description"></p>
+						<!-- ko if: pageCount -->
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									Page List <span class="label" data-bind="css: pageCountClass, text: pageCount"></span>
+								</div>
+								<ul data-bind="foreach: pages" class="list-group">
+									<li class="list-group-item">
+										<a data-bind="attr: { href: $data }, text: $data"></a>
+									</li>
+								</ul>
+							</div>
+						<!-- /ko -->
 						
 					</div>
 				</div>
@@ -505,3 +540,5 @@ $(document).ready(function(){
 	
 	ko.applyBindings(new pageVM());
 });
+
+

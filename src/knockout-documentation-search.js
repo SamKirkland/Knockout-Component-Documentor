@@ -46,23 +46,35 @@ ko.components.register('documentation-search', {
 		}
 		
 		self.links = params.links;
-		self.filteredLinks = self.links;
-		/*
 		self.filteredLinks = ko.computed(function(){
 			var searchingText = self.searchInput().toLowerCase();
+			
 			if (self.links !== undefined) {
 				self.links().forEach(function(link){
-					var foundMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
-					link.visible(foundMatch);
+					// search title
+					var titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
+					
+					// search tags
+					var tagMatch = false;
+					if (link.tags) {
+						link.tags().forEach(function(tag){
+							if (tagMatch) {
+								return false; // stop loop
+							}
+							tagMatch = tag.toLowerCase().indexOf(searchingText) > -1;
+						});
+					}
+					
+					link.visible(titleMatch || tagMatch);
 				});
 			}
 		});
-		*/
+		
 	},
 	template: `
 		<div class="form-group" data-bind="visible: showSearch">
-			<input type="text" class="form-control" data-bind="attr: { placeholder: placeholderText }"
-				data-bind="textInput: searchInput">
+			<input type="text" class="form-control"
+				data-bind="attr: { placeholder: placeholderText }, textInput: searchInput">
 			<span class="input-group-btn"></span>
 		</div>
 	
@@ -70,7 +82,7 @@ ko.components.register('documentation-search', {
 			<ul class="nav">
 				<li>
 					<a href="#knockoutComponents">Knockout Components</a> 
-					<ul class="nav" data-bind="foreach: filteredLinks">
+					<ul class="nav" data-bind="foreach: links">
 						<li><a data-bind="attr: { href: '#' + componentID }, text: name, visible: visible"></a></li>
 					</ul>
 				</li>
