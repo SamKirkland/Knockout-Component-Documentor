@@ -288,7 +288,8 @@ myViewModelFactory.prototype = {
 		var vm = this;
 		
 		vm.formType = paramObj.type; //types.get(paramObj.possibleValues || paramObj.defaultValue);
-
+		vm.formTypePretty = paramAsText(paramObj.type);
+		
 		vm.required = paramObj.required;
 		vm.description = paramObj.description || "";
 		vm.defaultValue = paramObj.defaultValue || "";
@@ -454,7 +455,7 @@ ko.components.register('knockout-component-preview', {
 										<div class="form-group">
 											<h3>
 												<span data-bind="text: name"></span>
-												<span class="badge" data-bind="text: formType">New</span>
+												<span class="badge" data-bind="text: formTypePretty"></span>
 											</h3>
 											
 											<p class="list-group-item-content" data-bind="text: description"></p>
