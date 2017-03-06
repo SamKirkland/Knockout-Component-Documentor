@@ -52,7 +52,14 @@ ko.components.register('documentation-search', {
 			if (self.links !== undefined) {
 				self.links().forEach(function(link){
 					// search title
-					var titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
+					if (link.name) {
+						var titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
+					}
+					
+					// search description
+					if (link.description) {
+						var descriptionMatch = link.description.toLowerCase().indexOf(searchingText) > -1;
+					}
 					
 					// search tags
 					var tagMatch = false;
@@ -65,7 +72,7 @@ ko.components.register('documentation-search', {
 						});
 					}
 					
-					link.visible(titleMatch || tagMatch);
+					link.visible(titleMatch || descriptionMatch || tagMatch);
 				});
 			}
 		});
