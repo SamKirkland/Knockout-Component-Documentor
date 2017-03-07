@@ -64,3 +64,12 @@ ko.components.register('random-sample-component', {
 		<b>allParams:</b> <span data-bind="text: allParams"></span>
 	`
 });
+
+ko.components.register('random-sample-component2', {
+	viewModel: function(params) {
+		this.paramText = params.paramText;
+	},
+	template: `
+		TEST
+	`
+});

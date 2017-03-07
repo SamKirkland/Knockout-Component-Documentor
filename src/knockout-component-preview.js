@@ -65,7 +65,7 @@ function codeEditorFunction(element, valueAccessor, allBindings, viewModel, bind
 	});
 }
 
-var myViewModelFactory = function(params, componentInfo) {
+var componentPreview = function(params, componentInfo) {
 	var self = this;
 	var functions = this; // this is just an alias for the protoype methods defined below
 	
@@ -95,242 +95,259 @@ var myViewModelFactory = function(params, componentInfo) {
 	
 	// you can preview all registered components if autodocument is true
 	//if (self.autodocument) {
-		functions.previewAllRegisteredComponents(params, self);
+		this.previewAllRegisteredComponents(params, self);
 	//}
 	
-	// you can preview the component you pass into this component
-	//if (!self.autodocument) {
-	//	functions.documentPassedComponent(self, componentInfo);
-	//}
+	/* you can preview the component you pass into this component
+	if (!self.autodocument) {
+		functions.documentPassedComponent(self, componentInfo);
+	}
+	*/
 	
 	return self;
 };
 
-myViewModelFactory.prototype = {
-	componentPreview: function(parentParams, self, componentName) { // the viewmodel to hold all info needed to preview a component
-		var vm = this;
-		
-		if (!ko.components.isRegistered(componentName)) {
-			throw `The component <${componentName}> isn't registered.`;
-		}
-		
-		if (!ko.components.Cc[componentName].allParams) {
-			throw `The component <${componentName}> doesn't have paramaters defined in its knockout registeration.'`;
-			// ToDo: add a link to github for instructions
-		}
-		
-		vm.name = componentName;
-		vm.componentID = 'preview-' + vm.name;
-		vm.visible = ko.observable(true);
-		vm.view = ko.observable(self.view || "dynamicEdit");
-		
-		vm.previewView = function() {
-			vm.view("dynamicEdit");
-		};
-		vm.tableView = function() {
-			vm.view("table");
-		};
-		
-		vm.description = ko.components.Cc[componentName].allParams.description;
-		
-		vm.tags = ko.observableArray(ko.components.Cc[componentName].allParams.tags);
-		
-		vm.pages = ko.observable(ko.components.Cc[componentName].allParams.pages);
-		vm.pageCount = ko.computed(function(){
-			if (vm.pages() === undefined) {
-				return 0;
-			}
-			else {
-				return vm.pages().length;
-			}
-		});
-		vm.pageCountClass = ko.computed(function(){
-			if (vm.pageCount() < 3) {
-				return "label-success";
-			}
-			if (vm.pageCount() < 6) {
-				return "label-warning";
-			}
-			
-			return "label-danger";
-		});
-		
-		vm.params = ko.observableArray();
-		vm.paramsBindingsOnly = {};
-		vm.html = ko.computed(function(){
-			var paramsText = "";
-			vm.params().forEach(function(element, index){
-				var seperator = "";
-				if (paramsText.length > 0) {
-					seperator = ", ";
-				}
-				if (element.value() !== element.defaultValue) {
-					paramsText += `${seperator}\n\t${element.name}: ${paramAsText(element.value())}`;
-				}
-			});
-			paramsText += "\n";
-			
-			// find code instance, and update it
-			// ToDo: fix this. make it less hacky
-			var $textBoxInstance = $('#' + vm.componentID + " .html").parent().find(".CodeMirror").last();
-			if ($textBoxInstance.length) {
-				$textBoxInstance[0].CodeMirror.setValue(`<${vm.name} params='${paramsText}'></${vm.name}>`);
-			}
-			
-			return `<${vm.name} params='${paramsText}'></${vm.name}>`;
-		});
-		
-		// script tag generator
-		if (parentParams.includeFn) {
-			vm.htmlInclude = parentParams.includeFn(componentName);
+componentPreview.prototype.setupBase = function(vm, parentParams, self, componentName) {
+	// this will be overridden later
+	vm.description = "";
+	vm.pages = [];
+	vm.pageCount = 0;
+	vm.pageCountClass = "";
+	vm.html = function(){};
+	vm.htmlInclude = "";
+	vm.tags = ko.observableArray([]);
+	vm.params = ko.observableArray([]);
+	vm.paramsBindingsOnly = {};
+	
+	vm.name = componentName;
+	vm.componentID = 'preview-' + vm.name;
+	vm.visible = ko.observable(true);
+	vm.view = ko.observable(self.view || "dynamicEdit");
+	
+	vm.previewView = function() {
+		vm.view("dynamicEdit");
+	};
+	vm.tableView = function() {
+		vm.view("table");
+	};
+};
+componentPreview.prototype.setupParams = function(vm, parentParams, self, componentName) {
+	vm.description = ko.components.Cc[componentName].allParams.description;
+	vm.tags = ko.observableArray(ko.components.Cc[componentName].allParams.tags);
+	vm.pages = ko.observable(ko.components.Cc[componentName].allParams.pages);
+	vm.pageCount = ko.computed(function(){
+		if (vm.pages() === undefined) {
+			return 0;
 		}
 		else {
-			vm.htmlInclude = `<script src="/js/${componentName}.js"></script>`;
+			return vm.pages().length;
+		}
+	});
+	vm.pageCountClass = ko.computed(function(){
+		if (vm.pageCount() < 3) {
+			return "label-success";
+		}
+		if (vm.pageCount() < 6) {
+			return "label-warning";
 		}
 		
-		// add the paramaters to the paramater list
-		
-		// ToDo: combine into one loop
-		$.each(ko.components.Cc[componentName].allParams.required, function(key, paramObj){
-			paramObj.required = true;
-			paramObj.name = key;
-			vm.params.push(new self.componentParamVM(self, paramObj));
-			//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
+		return "label-danger";
+	});
+	
+	vm.html = ko.computed(function(){
+		var paramsText = "";
+		vm.params().forEach(function(element, index){
+			var seperator = "";
+			if (paramsText.length > 0) {
+				seperator = ", ";
+			}
+			if (element.value() !== element.defaultValue) {
+				paramsText += `${seperator}\n\t${element.name}: ${paramAsText(element.value())}`;
+			}
 		});
-		$.each(ko.components.Cc[componentName].allParams.optional, function(key, paramObj){
-			paramObj.required = false;
-			paramObj.name = key;
-			vm.params.push(new self.componentParamVM(self, paramObj));
-			//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
-		});
+		paramsText += "\n";
 		
-		return vm;
-	},
-	previewAllRegisteredComponents: function(parentParams, self) {
-		$.each(ko.components.Cc, function(componentName, componentObj) {
-			if (!window.hasDocumentedSelf) { // Create a object to store components that have already been documented
-				window.hasDocumentedSelf = {};
-			}
-			
-			var dependentComponents = ["knockout-component-preview", "knockout-type-editor", "documentation-search"];
-			
-			var shouldDocumentThisComponent = dependentComponents.indexOf(componentName) === -1 || self.documentSelf === true;
-			
-			if (shouldDocumentThisComponent) {
-				try {
-						if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
-							self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName));
-							window.hasDocumentedSelf[componentName] = true;
-						}
-				}
-				catch (error) {
-					console.log(error);
-				}
-			}
-		})
-	},
-	documentPassedComponent: function(componentInfo) {
-		var domNodesLength = componentInfo.templateNodes.length;
-		for (var i = 0; i < domNodesLength; i++) {
-			var component = componentInfo.templateNodes[i];
-			var componentName = component.tagName;
-			
-			// only dom elements will have a tagName
-			if (componentName) {
-				componentName = componentName.toLowerCase();
-			
-				self.component = ko.observable(`<${componentName} params=></${componentName}>`);
-				self.componentName = componentName;
-				
-				// its a component!
-				if (ko.components.isRegistered(componentName)) {
-					
-					var componentParams = ko.components.Cc[componentName].allParams;
-					
-					//
-					if (componentParams === undefined) {
-						console.log(`The component <${componentName}> doesn't have paramaters defined in its knockout registeration. Please fix that.`);
-					}
-					
-					console.log(componentParams);
-					var componentParamsLength = componentParams.length;
-					for (var p = 0; p < componentParamsLength; p++) {
-						var currentParam = componentParams[p];
-						
-						console.log(currentParam);
-						
-						// add param to documentation
-						this.paramList.push(new functions.componentParamVM(currentParam));
-						
-						//self.currentParams
-						
-						// param attribute for the component
-						component.setAttribute("params", `${currentParam.name}: ${currentParam.name}`);
-					}
-					
-					
-				}
-			}
-		}
-	},
-	createParamObject: function(){
-		var paramListLength = this.paramList().length;
-		
-		var obj = {};
-		for (var i = 0; i < paramListLength; i++) {
-			var paramVM = this.paramList()[i];
-			obj[paramVM.name] = paramVM.value();
+		// find code instance, and update it
+		// ToDo: fix this. make it less hacky
+		var $textBoxInstance = $('#' + vm.componentID + " .html").parent().find(".CodeMirror").last();
+		if ($textBoxInstance.length) {
+			$textBoxInstance[0].CodeMirror.setValue(`<${vm.name} params='${paramsText}'></${vm.name}>`);
 		}
 		
-		return obj;
-	},
-	componentParamVM: function(self, paramObj) {
-		var vm = this;
-		
-		vm.formType = paramObj.type; //types.get(paramObj.possibleValues || paramObj.defaultValue);
-		vm.formTypePretty = paramAsText(paramObj.type);
-		
-		vm.required = paramObj.required;
-		vm.description = paramObj.description || "";
-		vm.defaultValue = paramObj.defaultValue || "";
-		vm.name = paramObj.name || "";
-		
-		// param change event
-		vm.valueBinding = ko.observable();
-		vm.value = ko.computed(function(){
-			if (vm.formType === types.boolean) {
-				return vm.valueBinding() === "true";
-			}
-			return vm.valueBinding();
-		});
-		
-		vm.possibleValues = ko.observableArray();
-		if (paramObj.possibleValues) { // ToDo: fix this
-			if (types.get(paramObj.possibleValues) == types.array) { // populate possibleValues
-				$.each(paramObj.possibleValues, function(index, element){
-					vm.possibleValues.push(paramObj.possibleValues[index]);
-				});
-			}
-			else {
-				vm.possibleValues.push(paramObj.possibleValues);
-			}
-		}
-		//else {
-			//vm.possibleValues.push("nothing defined...");
-			//console.log("No possible values set");
-		//}
-		
-		// setup input placeholder text
-		vm.placeHolder = "";
-		if (typeof paramObj.possibleValues != 'undefined') {
-			vm.placeHolder = paramObj.possibleValues.toString();
-		}
-		else if (typeof paramObj.defaultValue != 'undefined') {
-			vm.placeHolder = paramObj.defaultValue.toString();
-		}
-
-		return vm;
+		return `<${vm.name} params='${paramsText}'></${vm.name}>`;
+	});
+	
+	// script tag generator
+	if (parentParams.includeFn) {
+		vm.htmlInclude = parentParams.includeFn(componentName);
 	}
+	else {
+		vm.htmlInclude = `<script src="/js/${componentName}.js"></script>`;
+	}
+	
+	
+	
+	// add the paramaters to the paramater list
+	// ToDo: combine into one loop
+	$.each(ko.components.Cc[componentName].allParams.required, function(key, paramObj){
+		paramObj.required = true;
+		paramObj.name = key;
+		vm.params.push(new self.componentParamVM(self, paramObj));
+		//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
+	});
+	$.each(ko.components.Cc[componentName].allParams.optional, function(key, paramObj){
+		paramObj.required = false;
+		paramObj.name = key;
+		vm.params.push(new self.componentParamVM(self, paramObj));
+		//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
+	});
+};
+componentPreview.prototype.componentPreview = function(parentParams, self, componentName, that) { // the viewmodel to hold all info needed to preview a component
+	var vm = this;
+	
+	if (!ko.components.isRegistered(componentName)) {
+		throw `The component <${componentName}> isn't registered.`;
+	}
+	
+	// Setup base vars
+	that.setupBase(vm, parentParams, self, componentName);
+	
+	vm.error = "";
+	
+	if (ko.components.Cc[componentName].allParams) {
+		// Setup param required vars
+		that.setupParams(vm, parentParams, self, componentName);
+	}
+	else { // allParams not found, show error
+		vm.error = `The component <${componentName}> doesn't have paramaters defined in its knockout registeration.`;
+		//throw `The component <${componentName}> doesn't have paramaters defined in its knockout registeration.'`;
+		// ToDo: add a link to github for instructions
+	}
+	
+	return vm;
+};
+componentPreview.prototype.previewAllRegisteredComponents = function(parentParams, self) {
+	var that = this;
+	$.each(ko.components.Cc, function(componentName, componentObj) {
+		if (!window.hasDocumentedSelf) { // Create a object to store components that have already been documented
+			window.hasDocumentedSelf = {};
+		}
+		
+		var dependentComponents = ["knockout-component-preview", "knockout-type-editor", "documentation-search"];
+		
+		var shouldDocumentThisComponent = dependentComponents.indexOf(componentName) === -1 || self.documentSelf === true;
+		
+		if (shouldDocumentThisComponent) {
+			try {
+					if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
+						console.log(that);
+						self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName, that));
+						window.hasDocumentedSelf[componentName] = true;
+					}
+			}
+			catch (error) {
+				console.log(error);
+			}
+		}
+	})
+};
+componentPreview.prototype.documentPassedComponent = function(componentInfo) {
+	var domNodesLength = componentInfo.templateNodes.length;
+	for (var i = 0; i < domNodesLength; i++) {
+		var component = componentInfo.templateNodes[i];
+		var componentName = component.tagName;
+		
+		// only dom elements will have a tagName
+		if (componentName) {
+			componentName = componentName.toLowerCase();
+		
+			self.component = ko.observable(`<${componentName} params=></${componentName}>`);
+			self.componentName = componentName;
+			
+			// its a component!
+			if (ko.components.isRegistered(componentName)) {
+				
+				var componentParams = ko.components.Cc[componentName].allParams;
+				
+				//
+				if (componentParams === undefined) {
+					console.log(`The component <${componentName}> doesn't have paramaters defined in its knockout registeration. Please fix that.`);
+				}
+				
+				console.log(componentParams);
+				var componentParamsLength = componentParams.length;
+				for (var p = 0; p < componentParamsLength; p++) {
+					var currentParam = componentParams[p];
+					
+					console.log(currentParam);
+					
+					// add param to documentation
+					this.paramList.push(new functions.componentParamVM(currentParam));
+					
+					//self.currentParams
+					
+					// param attribute for the component
+					component.setAttribute("params", `${currentParam.name}: ${currentParam.name}`);
+				}
+				
+				
+			}
+		}
+	}
+};
+componentPreview.prototype.createParamObject = function(){
+	var paramListLength = this.paramList().length;
+	
+	var obj = {};
+	for (var i = 0; i < paramListLength; i++) {
+		var paramVM = this.paramList()[i];
+		obj[paramVM.name] = paramVM.value();
+	}
+	
+	return obj;
+};
+componentPreview.prototype.componentParamVM = function(self, paramObj) {
+	var vm = this;
+	
+	vm.formType = paramObj.type; //types.get(paramObj.possibleValues || paramObj.defaultValue);
+	vm.formTypePretty = paramAsText(paramObj.type);
+	
+	vm.required = paramObj.required;
+	vm.description = paramObj.description || "";
+	vm.defaultValue = paramObj.defaultValue || "";
+	vm.name = paramObj.name || "";
+	
+	// param change event
+	vm.valueBinding = ko.observable();
+	vm.value = ko.computed(function(){
+		if (vm.formType === types.boolean) {
+			return vm.valueBinding() === "true";
+		}
+		return vm.valueBinding();
+	});
+	
+	vm.possibleValues = ko.observableArray();
+	if (paramObj.possibleValues) { // ToDo: fix this
+		if (types.get(paramObj.possibleValues) == types.array) { // populate possibleValues
+			$.each(paramObj.possibleValues, function(index, element){
+				vm.possibleValues.push(paramObj.possibleValues[index]);
+			});
+		}
+		else {
+			vm.possibleValues.push(paramObj.possibleValues);
+		}
+	};
+	
+	// setup input placeholder text
+	vm.placeHolder = "";
+	if (typeof paramObj.possibleValues != 'undefined') {
+		vm.placeHolder = paramObj.possibleValues.toString();
+	}
+	else if (typeof paramObj.defaultValue != 'undefined') {
+		vm.placeHolder = paramObj.defaultValue.toString();
+	}
+
+	return vm;
 };
 
 ko.components.register('knockout-component-preview', {
@@ -373,7 +390,7 @@ ko.components.register('knockout-component-preview', {
 	},
 	viewModel: {
 		createViewModel: function(params, componentInfo) {
-			return new myViewModelFactory(params, componentInfo);
+			return new componentPreview(params, componentInfo);
 		}
 	},
 	template: `
@@ -393,13 +410,13 @@ ko.components.register('knockout-component-preview', {
 						
 						<h4 style="margin-bottom:0;" class="componentTitle" data-bind="text: name"></h4>
 						
-						<!-- ko if: tags().length -->
-							<div style="display:inline-block;margin:5px 0 10px 0;" data-bind="foreach: tags">
-								<span class="label label-default" data-bind="text: $data"></span>
-							</div>
-						<!-- /ko -->
+						<div style="display:inline-block;margin:5px 0 10px 0;" data-bind="foreach: tags">
+							<span class="label label-default" data-bind="text: $data"></span>
+						</div>
 						
 						<blockquote data-bind="visible: description, text: description"></blockquote>
+						
+						<p style="padding: 15px 20px;" class="bg-danger" data-bind="visible: error !== '', text: error"></p>
 						
 						<!-- ko if: pageCount -->
 							<div class="panel panel-default">
