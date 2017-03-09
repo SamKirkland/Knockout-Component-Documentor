@@ -43,12 +43,16 @@ ko.components.register('knockout-type-editor', {
 	viewModel: function(params) {
 		var vm = this;
 		
-		vm.valueBinding = ko.observable();
+		vm.valueBinding = params.valueBinding;
 		
-		vm.type = types.get(params.type);
+		vm.type = ko.observableArray([params.type]);
 		vm.required = params.required;
 		vm.defaultValue = params.defaultValue;
-		vm.possibleValues = params.possibleValues;
+		vm.possibleValues = params.possibleValues || ko.observableArray();
+		
+		vm.typeChange = function(){
+			console.log("!!!!");
+		};
 		
 		vm.colorizeData = function(data) {
 			var serialized = paramAsText(data);
@@ -76,49 +80,58 @@ ko.components.register('knockout-type-editor', {
 		return vm;
 	},
 	template: `
-		<!-- ko if: type !== types.boolean -->
-			POSSIBLE VALUES
+		<div style="background:#babaff;">
+			<!-- ko if: type().length === 1 -->
+				Type: <span data-bind="text: type()[0]"></span>
+			<!-- /ko -->
+			<!-- ko if: type().length > 1 -->
+				<select class="selectpicker" data-width="100%" data-bind="foreach: type, value: typeChange }">
+					<option data-bind="text: $data"></option>
+				</select>
+			<!-- /ko -->
+		</div>
+		
+		<!-- ko if: possibleValues().length > 0 -->
 			<select class="selectpicker" data-width="100%"
 				data-bind="foreach: possibleValues, value: valueBinding, attr: { multiple: type === types.array }">
 				
 				<option data-bind="attr: { 'data-content': $parent.colorizeData($data), 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }"></option>
 			</select>
 		<!-- /ko -->
-		ko if: possibleValues === undefined
-		
-			<!-- ko if: type === types.date -->
-				<input type="date" class="form-control">
+		<!-- ko if: possibleValues().length === 0 -->
+			<!-- ko if: type()[0] === types.date -->
+				<input type="date" class="form-control" data-bind="textInput: valueBinding">
 			<!-- /ko -->
-			<!-- ko if: type === types.dateTime -->
-				<input type="datetime-local" name="bdaytime">
+			<!-- ko if: type()[0] === types.dateTime -->
+				<input type="datetime-local" name="bdaytime" data-bind="textInput: valueBinding">
 			<!-- /ko -->
-			<!-- ko if: type === types.array -->
+			<!-- ko if: type()[0] === types.array -->
 				Array editor...
-				<textarea class="html" data-bind="text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+				<textarea class="html" data-bind="textInput: valueBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 			<!-- /ko -->
-			<!-- ko if: type === types.string -->
-				<input type="text" class="form-control" data-bind="value: defaultValue">
+			<!-- ko if: type()[0] === types.string -->
+				<input type="text" class="form-control" data-bind="textInput: valueBinding, value: defaultValue">
 			<!-- /ko -->
-			<!-- ko if: type === types.boolean -->
+			<!-- ko if: type()[0] === types.boolean -->
 				<div class="radio"><label>
-					<input type="radio" value="true"> true <span data-bind="text: defaultValue"></span>
+					<input type="radio" value="true"> true <span data-bind="textInput: valueBinding, text: defaultValue"></span>
 				</label></div>
 				<div class="radio"><label>
-					<input type="radio" value="false"> false <span data-bind="text: defaultValue"></span>
+					<input type="radio" value="false"> false <span data-bind="textInput: valueBinding, text: defaultValue"></span>
 				</label></div>
 			<!-- /ko -->
-			<!-- ko if: type === types.number -->
-				<input type="number" class="form-control">
+			<!-- ko if: type()[0] === types.number -->
+				<input type="number" class="form-control" data-bind="textInput: valueBinding">
 			<!-- /ko -->
-			<!-- ko if: type === types.object || type === types.json -->
-				<textarea class="html" data-bind="text: '{test:123}', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+			<!-- ko if: type()[0] === types.object || type()[0] === types.json -->
+				<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 			<!-- /ko -->
-			<!-- ko if: type === types.ko.observable -->
-				<textarea class="html" data-bind="text: 'ko.observable(true)', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+			<!-- ko if: type()[0] === types.ko.observable -->
+				<textarea class="html" data-bind="text: 'ko.observable()', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
 			<!-- /ko -->
-			<!-- ko if: type === types.ko.observableArray -->
-				<textarea class="html" data-bind="text: 'ko.observableArray([])', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+			<!-- ko if: type()[0] === types.ko.observableArray -->
+				<textarea class="html" data-bind="text: 'ko.observableArray()',uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
 			<!-- /ko -->
-		/ko
+		<!-- /ko -->
 	`
 });
