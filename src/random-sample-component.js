@@ -67,7 +67,12 @@ ko.components.register('random-sample-component', {
 
 ko.components.register('random-sample-component2', {
 	viewModel: function(params) {
-		this.paramText = params.paramText;
+		if (params) {
+			this.paramText = params.paramText || "undefined";
+		}
+		else {
+			this.paramText = "undefined";
+		}
 	},
 	template: `
 		TEST

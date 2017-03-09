@@ -63,6 +63,13 @@ function codeEditorFunction(element, valueAccessor, allBindings, viewModel, bind
 		matchBrackets: true,
 		theme: "mdn-like"
 	});
+	
+	myCodeMirror.on("change", function(cm, change) {
+		// update the value binding with the codemirror changes
+		if (viewModel.valueBinding !== undefined) {
+			viewModel.valueBinding(cm.getValue());
+		}
+	});
 }
 
 var componentPreview = function(params, componentInfo) {
@@ -77,7 +84,6 @@ var componentPreview = function(params, componentInfo) {
 	
 	self.paramList = ko.observableArray();
 	self.componentsToPreview = params.componentsToPreview || ko.observableArray();
-	//self.paramObject = ko.computed(functions.createParamObject(), this);
 	
 	self.documentSelf = params.documentSelf;
 	
@@ -117,7 +123,22 @@ componentPreview.prototype.setupBase = function(vm, parentParams, self, componen
 	vm.htmlInclude = "";
 	vm.tags = ko.observableArray([]);
 	vm.params = ko.observableArray([]);
-	vm.paramsBindingsOnly = {};
+	
+	
+	/* ToDo: actually fix the undefined errors */
+	vm.description = undefined;
+	vm.tags = undefined;
+	vm.pages = undefined;
+	vm.pageCount = undefined;
+	vm.pageCountClass = undefined;
+	vm.html = undefined;
+	vm.componentParamObject = undefined;
+	vm.htmlInclude = undefined;
+	
+	
+	
+	
+	
 	
 	vm.name = componentName;
 	vm.componentID = 'preview-' + vm.name;
@@ -153,7 +174,6 @@ componentPreview.prototype.setupParams = function(vm, parentParams, self, compon
 		
 		return "label-danger";
 	});
-	
 	vm.html = ko.computed(function(){
 		var paramsText = "";
 		vm.params().forEach(function(element, index){
@@ -162,7 +182,7 @@ componentPreview.prototype.setupParams = function(vm, parentParams, self, compon
 				seperator = ", ";
 			}
 			if (element.value() !== element.defaultValue) {
-				paramsText += `${seperator}\n\t${element.name}: ${paramAsText(element.value())}`;
+				paramsText += `${seperator}\n\t${element.name}: ${element.value()}`;
 			}
 		});
 		paramsText += "\n";
@@ -175,6 +195,17 @@ componentPreview.prototype.setupParams = function(vm, parentParams, self, compon
 		}
 		
 		return `<${vm.name} params='${paramsText}'></${vm.name}>`;
+	});
+	
+	vm.componentParamObject = ko.computed(function(){
+		var paramObject = {};
+		vm.params().forEach(function(element, index){
+			if (element.value() !== element.defaultValue) {
+				paramObject[element.name] = element.value();
+			}
+		});
+		
+		return paramObject;
 	});
 	
 	// script tag generator
@@ -193,12 +224,15 @@ componentPreview.prototype.setupParams = function(vm, parentParams, self, compon
 		paramObj.required = true;
 		paramObj.name = key;
 		vm.params.push(new self.componentParamVM(self, paramObj));
+		
+		//paramObject
 		//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
 	});
 	$.each(ko.components.Cc[componentName].allParams.optional, function(key, paramObj){
 		paramObj.required = false;
 		paramObj.name = key;
 		vm.params.push(new self.componentParamVM(self, paramObj));
+		
 		//vm.paramsBindingsOnly[vm.params()[key].name] = vm.params()[key].value;
 	});
 };
@@ -295,17 +329,6 @@ componentPreview.prototype.documentPassedComponent = function(componentInfo) {
 		}
 	}
 };
-componentPreview.prototype.createParamObject = function(){
-	var paramListLength = this.paramList().length;
-	
-	var obj = {};
-	for (var i = 0; i < paramListLength; i++) {
-		var paramVM = this.paramList()[i];
-		obj[paramVM.name] = paramVM.value();
-	}
-	
-	return obj;
-};
 componentPreview.prototype.componentParamVM = function(self, paramObj) {
 	var vm = this;
 	
@@ -320,11 +343,23 @@ componentPreview.prototype.componentParamVM = function(self, paramObj) {
 	// param change event
 	vm.valueBinding = ko.observable();
 	vm.value = ko.computed(function(){
-		if (vm.formType === types.boolean) {
-			return vm.valueBinding() === "true";
+		switch (vm.formType) {
+			case types.boolean:
+				return vm.valueBinding() === "true";
+				break;
+			
+			/* js types, don't wrap them in quotes */
+			case types.json:
+			case types.array:
+			case types.ko.observable:
+			case types.ko.observableArray:
+				return vm.valueBinding();
+				break;
 		}
-		return vm.valueBinding();
+		
+		return paramAsText(vm.valueBinding());
 	});
+	
 	
 	vm.possibleValues = ko.observableArray();
 	if (paramObj.possibleValues) { // ToDo: fix this
@@ -477,32 +512,8 @@ ko.components.register('knockout-component-preview', {
 											
 											<p class="list-group-item-content" data-bind="text: description"></p>
 											
-											<knockout-type-editor params="type: formType, required: required, defaultValue: defaultValue, possibleValues: possibleValues"></knockout-type-editor>
+											<knockout-type-editor params="valueBinding: valueBinding, type: formType, required: required, defaultValue: defaultValue, possibleValues: possibleValues"></knockout-type-editor>
 											
-											<!-- ko if: formType === types.array -->
-												<select class="selectpicker" data-width="100%" data-bind="foreach: possibleValues, value: valueBinding">
-													<option data-bind="attr: { 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }, text: $data"></option>
-												</select>
-											<!-- /ko -->
-											<!-- ko if: formType === types.string -->
-												<input data-bind="textInput: valueBinding, attr: { 'required': required, 'placeholder': placeHolder }"
-													type="text" class="form-control" id="ex1">
-											<!-- /ko -->
-											<!-- ko if: formType === types.boolean -->
-												<div class="radio">
-													<label>
-														<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex01" value="true"> true
-													</label>
-												</div>
-												<div class="radio">
-													<label>
-														<input type="radio" data-bind="checked: valueBinding" name="ex1" id="ex02" value="false"> false
-													</label>
-												</div>
-											<!-- /ko -->
-											<!-- ko if: formType === types.number -->
-												<input type="number" class="form-control" data-bind="textInput: valueBinding" id="ex1">
-											<!-- /ko -->
 										</div>
 									</div>
 								</div>
@@ -511,7 +522,7 @@ ko.components.register('knockout-component-preview', {
 								<div class="panel panel-default" style="flex: 1 0">
 									<div class="panel-heading">Preview</div>
 									<div class="panel-body" style="position: relative;">
-										<div data-bind='component: { name: name, params: paramsBindingsOnly }'></div>
+										<div data-bind='component: { name: name, params: componentParamObject }'></div>
 									</div>
 								</div>
 								<div class="panel panel-default" style="flex: 0 1">
