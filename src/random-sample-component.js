@@ -6,37 +6,37 @@ ko.components.register('random-sample-component', {
 		pages: ["/page1.html", "/page2.html", "/page3.html", "/page4.html", "/page5.html"],
 		required: {},
 		optional: {
-			paramText: {
-				description: "The text to appear within a component",
-				defaultValue: "oops",
+			title: {
+				description: "The title of the component",
+				defaultValue: "Default title",
 				type: types.string,
-				possibleValues: [123, true, false, null, undefined, "oops", "poops", "woops", "unicorn poo", "Ex3"]
+				possibleValues: ["Default title", "First title option", "Another option!", "YEAH"]
 			},
-			showBorder: {
-				description: "Show a border around the demo component",
+			description: {
+				description: "A description under the title",
+				defaultValue: "default description",
+				type: types.string
+			},
+			icon: {
+				description: "The icon to show below the title",
+				defaultValue: "glyphicon-user",
+				type: types.string,
+				possibleValues: ["glyphicon-user", "glyphicon-heart", "glyphicon-cog", "glyphicon-print", "glyphicon-bookmark"]
+			},
+			uselessParam: {
+				description: "Doesn't do anything...",
 				defaultValue: true,
 				type: types.boolean
 			},
-			dropdown: {
-				description: "The border size in pixels of the border",
-				defaultValue: "none",
-				type: types.string,
-				possibleValues: [0, "none", "somethingElse"]
-			},
 			borderWidth: {
 				description: "The border size in pixels of the border",
-				defaultValue: 0,
+				defaultValue: 1,
 				type: types.number
 			},
 			jsonParam: {
 				description: "JSON editor",
 				defaultValue: JSON.stringify({ ttest: 'json value', test_2: 123 }),
 				type: types.json
-			},
-			koObservable: {
-				description: "knockout observable",
-				defaultValue: "something",
-				type: types.ko.observable
 			},
 			koObservableArray: {
 				description: "knockout observableArray",
@@ -51,30 +51,23 @@ ko.components.register('random-sample-component', {
 		}
 	},
 	viewModel: function(params) {
-		this.paramText = params.paramText;
-		this.borderWidth = params.borderWidth;
-		this.allParams = ko.computed(function(){
-			return JSON.stringify(params);
-		});
+		var vm = this;
+		
+		vm.title = params.title || "Default Title";
+		vm.description = params.description || "default description";
+		vm.icon = params.icon || "glyphicon-refresh";
+		vm.showBorder = params.showBorder;
+		vm.borderWidth = parseInt(params.borderWidth) + "px" || "1px";
+		
+		return vm;
 	},
 	template: `
-		Just some silly demo component.<br>
-		The value of paramText: <span style="border-color:green;border-style:solid;" data-bind="text: paramText"></span><br>
-		<b>borderWidth:</b> <span data-bind="text: borderWidth"></span><br>
-		<b>allParams:</b> <span data-bind="text: allParams"></span>
-	`
-});
-
-ko.components.register('random-sample-component2', {
-	viewModel: function(params) {
-		if (params) {
-			this.paramText = params.paramText || "undefined";
-		}
-		else {
-			this.paramText = "undefined";
-		}
-	},
-	template: `
-		TEST
+		<div style="border:1px solid #000;" data-bind="style: { borderWidth: borderWidth }">
+			<h3 data-bind="text: title"></h3>
+			<p data-bind="text: description"></p>
+			<button type="button" class="btn btn-default btn-lg">
+				<span class="glyphicon" data-bind="css: icon"></span> Button
+			</button>
+		</div>
 	`
 });

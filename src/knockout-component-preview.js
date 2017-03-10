@@ -201,10 +201,13 @@ componentPreview.prototype.setupParams = function(vm, parentParams, self, compon
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
 			if (element.value() !== element.defaultValue) {
-				paramObject[element.name] = element.value();
+				var value = element.value();
+				if (value) { // ToDo: fix this hack too. Pass the correct types around instead of double converting to a string
+					value = element.value().replace(/['"]+/g, '');
+				}
+				paramObject[element.name] = value;
 			}
 		});
-		
 		return paramObject;
 	});
 	
@@ -274,7 +277,6 @@ componentPreview.prototype.previewAllRegisteredComponents = function(parentParam
 		if (shouldDocumentThisComponent) {
 			try {
 					if (!window.hasDocumentedSelf[componentName]) { // only document components that haven't already been documented
-						console.log(that);
 						self.componentsToPreview.push(new self.componentPreview(parentParams, self, componentName, that));
 						window.hasDocumentedSelf[componentName] = true;
 					}
@@ -308,12 +310,9 @@ componentPreview.prototype.documentPassedComponent = function(componentInfo) {
 					console.log(`The component <${componentName}> doesn't have paramaters defined in its knockout registeration. Please fix that.`);
 				}
 				
-				console.log(componentParams);
 				var componentParamsLength = componentParams.length;
 				for (var p = 0; p < componentParamsLength; p++) {
 					var currentParam = componentParams[p];
-					
-					console.log(currentParam);
 					
 					// add param to documentation
 					this.paramList.push(new functions.componentParamVM(currentParam));
@@ -453,16 +452,17 @@ ko.components.register('knockout-component-preview', {
 						
 						<p style="padding: 15px 20px;" class="bg-danger" data-bind="visible: error !== '', text: error"></p>
 						
-						<!-- ko if: pageCount -->
+						<!-- ko if: view() === 'table' && pageCount -->
 							<div class="panel panel-default">
 								<div class="panel-heading">
-									Page List <span class="label" data-bind="css: pageCountClass, text: pageCount"></span>
+									Included on <span class="label" data-bind="css: pageCountClass, text: pageCount"></span> pages
 								</div>
-								<ul data-bind="foreach: pages" class="list-group">
-									<li class="list-group-item">
+								<ul data-bind="foreach: pages" style="padding:0;">
+									<li class="list-group-item" style="float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;">
 										<a data-bind="attr: { href: $data }, text: $data"></a>
 									</li>
 								</ul>
+								<div class="clearfix"></div>
 							</div>
 						<!-- /ko -->
 						

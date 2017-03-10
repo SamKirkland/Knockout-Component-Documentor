@@ -8,9 +8,10 @@ var types = {
 	dateTime: 'dateTime',
 	array: '[object Array]',
 	string: '[object String]',
-	bool: '[object Boolean]',
+	boolean: '[object Boolean]',
 	number: '[object Number]',
 	json: 'json',
+	css: 'css',
 	ko: {
 		observable: 'ko observable',
 		observableArray: 'ko observableArray'
@@ -54,6 +55,10 @@ ko.components.register('knockout-type-editor', {
 			console.log("!!!!");
 		};
 		
+		vm.checkIfDefault = function (data) {
+			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
+		};
+		
 		vm.colorizeData = function(data) {
 			var serialized = paramAsText(data);
 			
@@ -74,28 +79,30 @@ ko.components.register('knockout-type-editor', {
 					color = "#bbb";
 			}
 			
-			return `<span style="color:${color};">${serialized}</span>`;
+			var isDefault = "";
+			if (data === vm.defaultValue) {
+				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
+			}
+			
+			return `<span style='color:${color};'>${serialized}</span>${isDefault}`;
 		};
 		
 		return vm;
 	},
 	template: `
 		<div style="background:#babaff;">
-			<!-- ko if: type().length === 1 -->
-				Type: <span data-bind="text: type()[0]"></span>
-			<!-- /ko -->
 			<!-- ko if: type().length > 1 -->
-				<select class="selectpicker" data-width="100%" data-bind="foreach: type, value: typeChange }">
+				<select class="selectpicker" data-width="100%" data-show-subtext="true" data-show-subtext="true" data-bind="foreach: type, value: typeChange }">
 					<option data-bind="text: $data"></option>
 				</select>
 			<!-- /ko -->
 		</div>
 		
 		<!-- ko if: possibleValues().length > 0 -->
-			<select class="selectpicker" data-width="100%"
+			<select class="selectpicker" data-width="100%" data-show-subtext="true"
 				data-bind="foreach: possibleValues, value: valueBinding, attr: { multiple: type === types.array }">
 				
-				<option data-bind="attr: { 'data-content': $parent.colorizeData($data), 'data-subtext': $data === $parent.defaultValue ? '*default*' : '' }"></option>
+				<option data-bind="attr: { 'data-content': $parent.colorizeData($data), 'value': $data }"></option>
 			</select>
 		<!-- /ko -->
 		<!-- ko if: possibleValues().length === 0 -->
@@ -114,10 +121,10 @@ ko.components.register('knockout-type-editor', {
 			<!-- /ko -->
 			<!-- ko if: type()[0] === types.boolean -->
 				<div class="radio"><label>
-					<input type="radio" value="true"> true <span data-bind="textInput: valueBinding, text: defaultValue"></span>
+					<input data-bind="checked: valueBinding" type="radio" value="true"> true
 				</label></div>
 				<div class="radio"><label>
-					<input type="radio" value="false"> false <span data-bind="textInput: valueBinding, text: defaultValue"></span>
+					<input data-bind="checked: valueBinding" type="radio" value="false"> false
 				</label></div>
 			<!-- /ko -->
 			<!-- ko if: type()[0] === types.number -->
