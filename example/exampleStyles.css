@@ -122,10 +122,8 @@ div.col-sm-9 div {
  * --------------------------------------------------
  */
 .row-eq-height {
-	display: -webkit-box;
-	display: -webkit-flex;
-	display: -ms-flexbox;
-	display:         flex;
+	display: flex;
+	flex-wrap: wrap;
 }
 
 

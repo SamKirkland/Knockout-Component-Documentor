@@ -28,6 +28,14 @@ https://github.com/SamKirkland/Knockout-Component-Preview
 <knockout-component-preview></knockout-component-preview>
 ```
 
+## Supported Types:
+A global varible "types" is available for use.
+Supported types: object, date, dateTime, array, string, boolean, number, function, json, html, css.
+Knockout types are also supported using ko.observable, ko.observableArray
+
+If you attempt to use another type you will get a "Unsupported Type" message.
+
+
 ## License:
 
 Copyright 2015 Sam Kirkland (mailto:knockout-component-preview@samkirkland.com)

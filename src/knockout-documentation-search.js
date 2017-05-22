@@ -1,7 +1,7 @@
 
 // Automatically builds out the documentation navigation
 ko.components.register('documentation-search', {
-	allParams: {
+	docs: {
 		required: {
 			links: {
 				description: "A ko.observableArray of list items to show in the navigation",

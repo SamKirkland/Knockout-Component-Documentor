@@ -1,6 +1,6 @@
 
 ko.components.register('random-sample-component', {
-	allParams: {
+	docs: {
 		description: "This is a sample component to show the usage of <knockout-component-preview> - you can test one of each editor.",
 		tags: ["demo", "example", "tag", "test"],
 		pages: ["/page1.html", "/page2.html", "/page3.html", "/page4.html", "/page5.html"],
@@ -9,7 +9,7 @@ ko.components.register('random-sample-component', {
 			title: {
 				description: "The title of the component",
 				defaultValue: "Default title",
-				type: types.string,
+				type: [types.string, types.json, types.boolean],
 				possibleValues: ["Default title", "First title option", "Another option!", "YEAH"]
 			},
 			description: {
