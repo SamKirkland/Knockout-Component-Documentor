@@ -319,7 +319,7 @@ ko.components.register('knockout-component-preview', {
 						
 						<blockquote data-bind="visible: description, text: description"></blockquote>
 						
-						<ul style="padding: 10px 30px;" class="bg-danger" data-bind="foreach: errors, visible: errors().length">
+						<ul style="padding: 10px 30px;" class="alert alert-danger" data-bind="foreach: errors, visible: errors().length">
 							<li data-bind="html: $data"></li>
 						</ul>
 						
@@ -404,7 +404,12 @@ ko.components.register('knockout-component-preview', {
 								<div class="panel panel-default" style="flex: 1 0">
 									<div class="panel-heading">Preview</div>
 									<div class="panel-body" style="position: relative;">
-										<div data-bind='component: { name: componentName, params: componentParamObject }'></div>
+										<!-- ko if: componentName !== 'knockout-type-editor' -->
+											<div data-bind='component: { name: componentName, params: componentParamObject }'></div>
+										<!-- /ko -->
+										<!-- ko if: componentName === 'knockout-type-editor' -->
+											<div class="alert alert-danger" style="margin:0;">knockout-type-editor can't preview its self</div>
+										<!-- /ko -->
 									</div>
 								</div>
 								<div class="panel panel-default" style="flex: 0 1">
