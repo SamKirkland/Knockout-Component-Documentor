@@ -1,3 +1,4 @@
+require("./knockout-documentation-search.scss");
 
 // Automatically builds out the documentation navigation
 ko.components.register('documentation-search', {
@@ -5,19 +6,19 @@ ko.components.register('documentation-search', {
 		required: {
 			links: {
 				description: "A ko.observableArray of list items to show in the navigation",
-				type: types.ko.observableArray
+				type: ko.types.ko.observableArray
 			}
 		},
 		optional: {
 			showSearch: {
 				description: "To display the search above the navigation",
 				defaultValue: true,
-				type: types.boolean
+				type: ko.types.boolean
 			},
 			placeholderText: {
 				description: "The default text to display in the search box",
 				defaultValue: "Search for...",
-				type: types.string
+				type: ko.types.string
 			}
 		}
 	},
@@ -48,7 +49,6 @@ ko.components.register('documentation-search', {
 		self.links = params.links;
 		self.filteredLinks = ko.computed(function(){
 			var searchingText = self.searchInput().toLowerCase();
-			
 			if (self.links !== undefined) {
 				self.links().forEach(function(link){
 					// search title
@@ -64,7 +64,7 @@ ko.components.register('documentation-search', {
 					// search tags
 					var tagMatch = false;
 					if (link.tags) {
-						link.tags().forEach(function(tag){
+						link.tags.forEach(function(tag){
 							if (tagMatch) {
 								return false; // stop loop
 							}
@@ -78,22 +78,5 @@ ko.components.register('documentation-search', {
 		});
 		
 	},
-	template: `
-		<div class="form-group" data-bind="visible: showSearch">
-			<input type="text" class="form-control"
-				data-bind="attr: { placeholder: placeholderText }, textInput: searchInput">
-			<span class="input-group-btn"></span>
-		</div>
-	
-		<nav class="bs-docs-sidebar">
-			<ul class="nav">
-				<li>
-					<a href="#knockoutComponents">Knockout Components</a> 
-					<ul class="nav" data-bind="foreach: links">
-						<li><a data-bind="attr: { href: '#' + componentID }, text: name, visible: visible"></a></li>
-					</ul>
-				</li>
-			</ul>
-		</nav>
-	`
+	template: require("./knockout-documentation-search.html")
 });

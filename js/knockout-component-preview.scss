@@ -1,0 +1,36 @@
+.params-list {
+  margin: 0;
+}
+
+.no-bottom-margin {
+  margin-bottom: 0;
+}
+
+
+.preview-max-height {
+  max-height: 90vh;
+}
+
+
+
+.styled-scrollbar {
+  background-color: rgba(0,0,0,.2);
+  -webkit-background-clip: text;
+  transition: background-color .5s;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.styled-scrollbar:hover {
+  background-color: rgba(0,0,0,0.5);  
+}
+.styled-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.styled-scrollbar::-webkit-scrollbar-track {
+  display: none;
+}
+.styled-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: inherit;
+}

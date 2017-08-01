@@ -1,3 +1,4 @@
+require("./random-sample-component.scss");
 
 ko.components.register('random-sample-component', {
 	docs: {
@@ -9,44 +10,44 @@ ko.components.register('random-sample-component', {
 			title: {
 				description: "The title of the component",
 				defaultValue: "Default title",
-				type: [types.string, types.json, types.boolean],
+				type: [ko.types.string, ko.types.json, ko.types.boolean],
 				possibleValues: ["Default title", "First title option", "Another option!", "YEAH"]
 			},
 			description: {
 				description: "A description under the title",
 				defaultValue: "default description",
-				type: types.string
+				type: ko.types.string
 			},
 			icon: {
 				description: "The icon to show below the title",
 				defaultValue: "glyphicon-user",
-				type: types.string,
+				type: ko.types.string,
 				possibleValues: ["glyphicon-user", "glyphicon-heart", "glyphicon-cog", "glyphicon-print", "glyphicon-bookmark"]
 			},
 			uselessParam: {
 				description: "Doesn't do anything...",
 				defaultValue: true,
-				type: types.boolean
+				type: ko.types.boolean
 			},
 			borderWidth: {
 				description: "The border size in pixels of the border",
 				defaultValue: 1,
-				type: types.number
+				type: ko.types.number
 			},
 			jsonParam: {
 				description: "JSON editor",
 				defaultValue: JSON.stringify({ ttest: 'json value', test_2: 123 }),
-				type: types.json
+				type: ko.types.json
 			},
 			koObservableArray: {
 				description: "knockout observableArray",
 				defaultValue: "something",
-				type: types.ko.observableArray
+				type: ko.types.ko.observableArray
 			},
 			jsArray: {
 				description: "js array",
 				defaultValue: "something",
-				type: types.array
+				type: ko.types.array
 			}
 		}
 	},
@@ -57,17 +58,9 @@ ko.components.register('random-sample-component', {
 		vm.description = params.description || "default description";
 		vm.icon = params.icon || "glyphicon-refresh";
 		vm.showBorder = params.showBorder;
-		vm.borderWidth = parseInt(params.borderWidth) + "px" || "1px";
+		vm.borderWidth = params.borderWidth;
 		
 		return vm;
 	},
-	template: `
-		<div style="border:1px solid #000;" data-bind="style: { borderWidth: borderWidth }">
-			<h3 data-bind="text: title"></h3>
-			<p data-bind="text: description"></p>
-			<button type="button" class="btn btn-default btn-lg">
-				<span class="glyphicon" data-bind="css: icon"></span> Button
-			</button>
-		</div>
-	`
+	template: require("./random-sample-component.html")
 });
