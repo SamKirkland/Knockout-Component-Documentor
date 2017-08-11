@@ -59,7 +59,7 @@ ko.components.register('random-sample-component', {
 		vm.icon = params.icon || "glyphicon-refresh";
 		vm.showBorder = params.showBorder;
 		vm.borderWidth = params.borderWidth;
-		
+
 		return vm;
 	},
 	template: require("./random-sample-component.html")

@@ -28,12 +28,12 @@
 	<!-- /ko -->
 	<!-- ko if: typeEditing() === ko.types.boolean -->
 		<div class="radio"><label>
-			<input data-bind="attr: { name: uid }, checked: textBinding" type="radio" value="true" /> true
-			<span data-bind="visible: defaultValue === 'true'">*default</span>
+			<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
+			<span data-bind="visible: value">*default</span>
 		</label></div>
 		<div class="radio"><label>
-			<input data-bind="attr: { name: uid }, checked: textBinding" type="radio" value="false" /> false
-			<span data-bind="visible: defaultValue === 'false'">*default</span>
+			<input data-bind="attr: { name: uid }, checked: value, checkedValue: false" type="radio" value="false" /> false
+			<span data-bind="visible: !value">*default</span>
 		</label></div>
 	<!-- /ko -->
 	<!-- ko if: typeEditing() === ko.types.number -->

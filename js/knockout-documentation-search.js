@@ -39,12 +39,7 @@ ko.components.register('documentation-search', {
 		self.searchInput = ko.observable("");
 		
 		// Search text, defaults to "Search for..."
-		if (params.placeholderText !== "") {
-			self.placeholderText = params.placeholderText;
-		}
-		else {
-			self.placeholderText = "Search for...";
-		}
+		self.placeholderText = params.placeholderText || "Search for...";
 		
 		self.links = params.links;
 		self.filteredLinks = ko.computed(function(){

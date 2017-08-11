@@ -27,6 +27,9 @@ ko.components.register('knockout-type-editor', {
 			if (ko.unwrap(vm.typeEditing) === "[object Number]") {
 				vm.value(parseInt(newValue));
 			}
+			else if (ko.unwrap(vm.typeEditing) === "[object Boolean]") {
+				vm.value(JSON.parse(newValue));
+			}
 			else {
 				vm.value(newValue);
 			}
