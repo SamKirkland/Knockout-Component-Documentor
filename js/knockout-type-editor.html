@@ -1,14 +1,13 @@
-<!-- ko if: type().length > 1 -->
+<!-- ko if: types.length > 1 -->
 	<select data-show-subtext="true" data-show-subtext="true"
-		data-bind="foreach: type, value: typeEditing">
-		<option data-bind="attr: { value: $data }, text: typeAsText($data)"></option>
+		data-bind="foreach: types, value: typeEditing">
+		<option data-bind="attr: { value: $data }, text: $parent.typeAsText($data)"></option>
 	</select>
 <!-- /ko -->
 
 <!-- ko if: possibleValues.length > 0 -->
 	<select data-width="100%" data-show-subtext="true"
-		data-bind="foreach: possibleValues, value: textBinding, attr: { multiple: type === ko.types.array }">
-		
+		data-bind="foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }">
 		<option data-bind="attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data"></option>
 	</select>
 <!-- /ko -->
@@ -27,14 +26,18 @@
 		<input type="text" class="form-control" data-bind="textInput: textBinding, value: defaultValue" />
 	<!-- /ko -->
 	<!-- ko if: typeEditing() === ko.types.boolean -->
-		<div class="radio"><label>
-			<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
-			<span data-bind="visible: value">*default</span>
-		</label></div>
-		<div class="radio"><label>
-			<input data-bind="attr: { name: uid }, checked: value, checkedValue: false" type="radio" value="false" /> false
-			<span data-bind="visible: !value">*default</span>
-		</label></div>
+		<div class="radio">
+			<label>
+				<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
+				<span data-bind="visible: defaultValue">*default</span>
+			</label>
+		</div>
+		<div class="radio">
+			<label>
+				<input data-bind="attr: { name: uid }, checked: value, checkedValue: false" type="radio" value="false" /> false
+				<span data-bind="visible: !defaultValue">*default</span>
+			</label>
+		</div>
 	<!-- /ko -->
 	<!-- ko if: typeEditing() === ko.types.number -->
 		<input type="number" class="form-control" data-bind="textInput: textBinding" />
@@ -42,10 +45,7 @@
 	<!-- ko if: typeEditing() === ko.types.object || typeEditing() === ko.types.json -->
 		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.ko.observable -->
-		<textarea class="html" data-bind="text: 'ko.observable()', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
-	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.ko.observableArray -->
-		<textarea class="html" data-bind="text: 'ko.observableArray()',uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+	<!-- ko if: typeEditing() === ko.types.ko.observable || typeEditing() === ko.types.ko.observableArray -->
+		<textarea class="html" data-bind="text: textBinding, uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
 	<!-- /ko -->
 <!-- /ko -->

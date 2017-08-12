@@ -72,8 +72,8 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentParamObject = ko.computed(function(){
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
-			if (element.valueBinding() !== element.defaultValue) {
-				paramObject[element.name] = element.valueBinding();
+			if (element.value() !== element.defaultValue) {
+				paramObject[element.name] = element.value();
 			}
 		});
 		return paramObject;
@@ -154,18 +154,10 @@ var paramVM = function(parent, construct){
 	vm.possibleValues = construct.possibleValues || []; // all possible values (if set)
 	vm.example = construct.example || ""; // No example error
 	
-	function convertToArray(data) {
-		if (ko.types.get(data) === ko.types.array) {
-			return data;
-		}
-		
-		return [data];
-	};
-	
-	vm.type = convertToArray(construct.type);
-	vm.typeEditing = ko.observable(vm.type[0]);
+	vm.value = ko.observable();
+	vm.types = convertToArray(construct.type);
 	vm.typeFormatted = ko.computed(function(){
-		return vm.type.map(function(t) {
+		return vm.types.map(function(t) {
 			return ko.types.getFormatted(t, function(){
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
@@ -175,25 +167,13 @@ var paramVM = function(parent, construct){
 		});
 	});
 	
-	// param change event
-	vm.valueBinding = ko.observable();
-	vm.value = ko.computed(function(){
-		console.log("recalcing");
-		switch (vm.typeEditing()) {
-			case ko.types.boolean:
-				return vm.valueBinding() === "true";
-			
-			case ko.types.string:
-				return JSON.stringify(vm.valueBinding());
-			
-			/* js types, don't wrap them in quotes */
-			default:
-				return vm.valueBinding();
+	function convertToArray(data) {
+		if (ko.types.get(data) === ko.types.array) {
+			return data;
 		}
 		
-		return paramAsText(vm.valueBinding());
-	});
-	
+		return [data];
+	};
 	
 	return vm;
 };

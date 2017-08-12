@@ -57,11 +57,6 @@ Object.flatten = function(data) {
 var typesValues = Object.values(Object.flatten(ko.types));
 
 
-window.typeAsText = function(type) { // returns the original string or returns the second word in brackets
-	var found = type.match(/(?:\[\w+ )?(\w+)(?:\])?/i);
-	return found[1];
-}
-
 window.paramAsText = function(property) {
 	if (property === undefined) {
 		return "undefined";
@@ -107,7 +102,10 @@ ko.bindingHandlers.clipboard = {
 	init: function(el, valueAccessor, allBindings, data, context) {
 		new Clipboard(el, {
 			text: function(trigger) {
-				return $(trigger).parent().next().find("textarea").val();
+				if (typeof valueAccessor === "function") { // ko.unwrap wont work here
+					return valueAccessor();
+				}
+				return valueAccessor;
 			}
 		}).on('success', function(e) {
 			$(e.trigger).addClass("btn-success").find("span")
@@ -145,8 +143,8 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 	
 	myCodeMirror.on("change", function(cm, change) {
 		// update the value binding with the codemirror changes
-		if (viewModel.valueBinding !== undefined) {
-			viewModel.valueBinding(cm.getValue());
+		if (viewModel.value !== undefined) {
+			viewModel.value(cm.getValue());
 		}
 	});
 };

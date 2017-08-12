@@ -90,12 +90,11 @@
 								<p class="list-group-item-content" data-bind="text: description"></p>
 								
 								<knockout-type-editor params="
-									value: valueBinding,
-									type: type,
+									value: value,
+									types: types,
 									required: required,
 									defaultValue: defaultValue,
-									possibleValues: possibleValues,
-									typeEditing: typeEditing"></knockout-type-editor>
+									possibleValues: possibleValues"></knockout-type-editor>
 								
 							</div>
 						</div>
@@ -119,7 +118,7 @@
 						<div class="panel-heading">
 							Include Tags
 							
-							<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
+							<div data-bind="clipboard: htmlInclude" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
 								<span class="glyphicon glyphicon-copy"></span> Copy
 							</div>
 						</div>
@@ -131,7 +130,7 @@
 						<div class="panel-heading">
 							Component Code
 							
-							<div data-bind="clipboard: {}" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
+							<div data-bind="clipboard: html" class="btn btn-default btn-sm pull-right" style="margin-top:-5px;margin-right:-9px;">
 								<span class="glyphicon glyphicon-copy"></span> Copy
 							</div>
 						</div>

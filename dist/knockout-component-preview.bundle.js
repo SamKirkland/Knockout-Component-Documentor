@@ -567,11 +567,6 @@ Object.flatten = function(data) {
 var typesValues = Object.values(Object.flatten(ko.types));
 
 
-window.typeAsText = function(type) { // returns the original string or returns the second word in brackets
-	var found = type.match(/(?:\[\w+ )?(\w+)(?:\])?/i);
-	return found[1];
-}
-
 window.paramAsText = function(property) {
 	if (property === undefined) {
 		return "undefined";
@@ -617,7 +612,10 @@ ko.bindingHandlers.clipboard = {
 	init: function(el, valueAccessor, allBindings, data, context) {
 		new Clipboard(el, {
 			text: function(trigger) {
-				return $(trigger).parent().next().find("textarea").val();
+				if (typeof valueAccessor === "function") { // ko.unwrap wont work here
+					return valueAccessor();
+				}
+				return valueAccessor;
 			}
 		}).on('success', function(e) {
 			$(e.trigger).addClass("btn-success").find("span")
@@ -655,8 +653,8 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 	
 	myCodeMirror.on("change", function(cm, change) {
 		// update the value binding with the codemirror changes
-		if (viewModel.valueBinding !== undefined) {
-			viewModel.valueBinding(cm.getValue());
+		if (viewModel.value !== undefined) {
+			viewModel.value(cm.getValue());
 		}
 	});
 };
@@ -996,8 +994,8 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentParamObject = ko.computed(function(){
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
-			if (element.valueBinding() !== element.defaultValue) {
-				paramObject[element.name] = element.valueBinding();
+			if (element.value() !== element.defaultValue) {
+				paramObject[element.name] = element.value();
 			}
 		});
 		return paramObject;
@@ -1078,18 +1076,10 @@ var paramVM = function(parent, construct){
 	vm.possibleValues = construct.possibleValues || []; // all possible values (if set)
 	vm.example = construct.example || ""; // No example error
 	
-	function convertToArray(data) {
-		if (ko.types.get(data) === ko.types.array) {
-			return data;
-		}
-		
-		return [data];
-	};
-	
-	vm.type = convertToArray(construct.type);
-	vm.typeEditing = ko.observable(vm.type[0]);
+	vm.value = ko.observable();
+	vm.types = convertToArray(construct.type);
 	vm.typeFormatted = ko.computed(function(){
-		return vm.type.map(function(t) {
+		return vm.types.map(function(t) {
 			return ko.types.getFormatted(t, function(){
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
@@ -1099,25 +1089,13 @@ var paramVM = function(parent, construct){
 		});
 	});
 	
-	// param change event
-	vm.valueBinding = ko.observable();
-	vm.value = ko.computed(function(){
-		console.log("recalcing");
-		switch (vm.typeEditing()) {
-			case ko.types.boolean:
-				return vm.valueBinding() === "true";
-			
-			case ko.types.string:
-				return JSON.stringify(vm.valueBinding());
-			
-			/* js types, don't wrap them in quotes */
-			default:
-				return vm.valueBinding();
+	function convertToArray(data) {
+		if (ko.types.get(data) === ko.types.array) {
+			return data;
 		}
 		
-		return paramAsText(vm.valueBinding());
-	});
-	
+		return [data];
+	};
 	
 	return vm;
 };
@@ -1242,27 +1220,26 @@ ko.components.register('knockout-type-editor', {
 		var vm = this;
 
 		vm.value = params.value;
+		vm.types = params.types;
+		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
-			if (ko.unwrap(vm.typeEditing) === "[object Number]") {
+			if (ko.unwrap(vm.typeEditing) === ko.types.number) {
 				vm.value(parseInt(newValue));
 			}
-			else if (ko.unwrap(vm.typeEditing) === "[object Boolean]") {
+			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean) {
 				vm.value(JSON.parse(newValue));
 			}
 			else {
 				vm.value(newValue);
 			}
-
 		});
 		
 		vm.required = params.required;
 		vm.defaultValue = params.defaultValue;
 		vm.possibleValues = params.possibleValues || ko.observableArray();
 		
-		vm.type = ko.observableArray(params.type);
-		vm.typeEditing = params.typeEditing; // default to first item in list
 		
 		vm.uid = idGen.getId();
 		
@@ -1270,6 +1247,12 @@ ko.components.register('knockout-type-editor', {
 			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
 		};
 		
+		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
+			var found = type.match(/(?:\[\w+ )?(\w+)(?:\])?/i);
+			return found[1];
+			return type;
+		};
+
 		vm.colorizeData = function(data) {
 			var serialized = paramAsText(data);
 			
@@ -1353,13 +1336,13 @@ exports.push([module.i, "", ""]);
 /* 14 */
 /***/ (function(module, exports) {
 
-module.exports = "<!-- ko if: type().length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: type, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: possibleValues.length > 0 -->\r\n\t<select data-width=\"100%\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: possibleValues, value: textBinding, attr: { multiple: type === ko.types.array }\">\r\n\t\t\r\n\t\t<option data-bind=\"attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n<!-- ko if: possibleValues.length === 0 -->\r\n\t<!-- ko if: typeEditing() === ko.types.date -->\r\n\t\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.dateTime -->\r\n\t\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.array -->\r\n\t\tArray editor...\r\n\t\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.string -->\r\n\t\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.boolean -->\r\n\t\t<div class=\"radio\"><label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t<span data-bind=\"visible: value\">*default</span>\r\n\t\t</label></div>\r\n\t\t<div class=\"radio\"><label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t<span data-bind=\"visible: !value\">*default</span>\r\n\t\t</label></div>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.number -->\r\n\t\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.object || typeEditing() === ko.types.json -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.ko.observable -->\r\n\t\t<textarea class=\"html\" data-bind=\"text: 'ko.observable()', uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.ko.observableArray -->\r\n\t\t<textarea class=\"html\" data-bind=\"text: 'ko.observableArray()',uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }\"></textarea>\r\n\t<!-- /ko -->\r\n<!-- /ko -->";
+module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $parent.typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: possibleValues.length > 0 -->\r\n\t<select data-width=\"100%\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }\">\r\n\t\t<option data-bind=\"attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n<!-- ko if: possibleValues.length === 0 -->\r\n\t<!-- ko if: typeEditing() === ko.types.date -->\r\n\t\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.dateTime -->\r\n\t\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.array -->\r\n\t\tArray editor...\r\n\t\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.string -->\r\n\t\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.boolean -->\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.number -->\r\n\t\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.object || typeEditing() === ko.types.json -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.ko.observable || typeEditing() === ko.types.ko.observableArray -->\r\n\t\t<textarea class=\"html\" data-bind=\"text: textBinding, uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }\"></textarea>\r\n\t<!-- /ko -->\r\n<!-- /ko -->";
 
 /***/ }),
 /* 15 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"subgroup container-fluid\" data-bind=\"foreach: components\">\r\n\t<div data-bind=\"attr: { 'id': componentID }\">\r\n\t\t<div class=\"row\">\r\n\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t<hr style=\"border-color: #ccc;\">\r\n\t\t\t\t<div class=\"btn-group pull-right\" role=\"group\">\r\n\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Preview' }, click: previewView\">\r\n\t\t\t\t\t\t<span class=\"glyphicon glyphicon-eye-open\"></span> Preview\r\n\t\t\t\t\t</button>\r\n\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Table' }, click: tableView\">\r\n\t\t\t\t\t\t<span class=\"glyphicon glyphicon-list-alt\"></span> Table\r\n\t\t\t\t\t</button>\r\n\t\t\t\t</div>\r\n\t\t\t\t\r\n\t\t\t\t<h4 style=\"margin-bottom:0;\" class=\"componentTitle\" data-bind=\"text: componentName\"></h4>\r\n\t\t\t\t\r\n\t\t\t\t<div style=\"display:inline-block;margin:5px 0 10px 0;\" data-bind=\"foreach: tags\">\r\n\t\t\t\t\t<span class=\"label label-default\" data-bind=\"text: $data\"></span>\r\n\t\t\t\t</div>\r\n\t\t\t\t\r\n\t\t\t\t<blockquote data-bind=\"visible: description, text: description\"></blockquote>\r\n\t\t\t\t\r\n\t\t\t\t<ul style=\"padding: 10px 30px;\" class=\"alert alert-danger\" data-bind=\"foreach: errors, visible: errors().length\">\r\n\t\t\t\t\t<li data-bind=\"html: $data\"></li>\r\n\t\t\t\t</ul>\r\n\t\t\t\t\r\n\t\t\t\t<!-- ko if: view() === 'Table' && pages.length -->\r\n\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tIncluded on <b data-bind=\"text: pages.length\"></b> pages\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div data-bind=\"foreach: pages\" class=\"list-group\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<a style=\"float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;\"\r\n\t\t\t\t\t\t\t\tclass=\"list-group-item\" data-bind=\"attr: { href: $data }, text: $data\"></a>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t\t<div class=\"row row-eq-height\" data-bind=\"css: { 'preview-max-height': view() === 'Preview' }\">\r\n\t\t\t<!-- ko if: view() === 'Table' -->\r\n\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t<h3 style=\"display:block;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<h4 style=\"display:block;width:100%;\">Required</h4>\r\n\t\t\t\t\t<table class=\"table table-striped table-bordered table-hover table-condensed\">\r\n\t\t\t\t\t\t<thead>\r\n\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t<th>Name</th>\r\n\t\t\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t\t\t<th>Type(s)</th>\r\n\t\t\t\t\t\t\t\t<th>Required</th>\r\n\t\t\t\t\t\t\t\t<th>Default</th>\r\n\t\t\t\t\t\t\t\t<th>Possible Values</th>\r\n\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t</thead>\r\n\t\t\t\t\t\t<tbody data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: name\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: description\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"foreach: typeFormatted\">\r\n\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-preview--dataType\">\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: $data\"></span>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: required\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: defaultValue\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"foreach: possibleValues\">\r\n\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-preview--dataType\">\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: paramAsText($data)\"></span>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t</tbody>\r\n\t\t\t\t\t</table>\r\n\t\t\t\t</div>\r\n\t\t\t<!-- /ko -->\r\n\t\t\t<!-- ko if: view() === 'Preview' -->\r\n\t\t\t\t<div class=\"col-xs-6 col-lg-4 no-gutter styled-scrollbar\">\r\n\t\t\t\t\t<div class=\"list-group params-list\" data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t<div class=\"list-group-item\">\r\n\t\t\t\t\t\t\t<div class=\"form-group\">\r\n\t\t\t\t\t\t\t\t<h3>\r\n\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\"></span>\r\n\t\t\t\t\t\t\t\t\t<span class=\"badge\" data-bind=\"text: typeFormatted\"></span>\r\n\t\t\t\t\t\t\t\t</h3>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<p class=\"list-group-item-content\" data-bind=\"text: description\"></p>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<knockout-type-editor params=\"\r\n\t\t\t\t\t\t\t\t\tvalue: valueBinding,\r\n\t\t\t\t\t\t\t\t\ttype: type,\r\n\t\t\t\t\t\t\t\t\trequired: required,\r\n\t\t\t\t\t\t\t\t\tdefaultValue: defaultValue,\r\n\t\t\t\t\t\t\t\t\tpossibleValues: possibleValues,\r\n\t\t\t\t\t\t\t\t\ttypeEditing: typeEditing\"></knockout-type-editor>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"col-xs-6 col-lg-8 no-gutter-right styled-scrollbar\" style=\"display:flex;flex-direction:column;\">\r\n\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 1 0\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">Preview</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"position: relative;\">\r\n\t\t\t\t\t\t\t<!-- ko if: !blackListedComponent -->\r\n\t\t\t\t\t\t\t\t<div data-bind='component: { name: componentName, params: componentParamObject }'></div>\r\n\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t<!-- ko if: blackListedComponent -->\r\n\t\t\t\t\t\t\t\t<div class=\"alert alert-danger\" style=\"margin:0;\">\r\n\t\t\t\t\t\t\t\t\t<span data-bind=\"text: componentName\"></span> can't preview itself\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tInclude Tags\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t<div data-bind=\"clipboard: {}\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"panel panel-default no-bottom-margin\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tComponent Code\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t<div data-bind=\"clipboard: {}\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t<!-- /ko -->\r\n\t\t</div>\r\n\t</div>\r\n</div>\r\n\r\n\r\n<br>\r\n<br>\r\n<br>";
+module.exports = "<div class=\"subgroup container-fluid\" data-bind=\"foreach: components\">\r\n\t<div data-bind=\"attr: { 'id': componentID }\">\r\n\t\t<div class=\"row\">\r\n\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t<hr style=\"border-color: #ccc;\">\r\n\t\t\t\t<div class=\"btn-group pull-right\" role=\"group\">\r\n\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Preview' }, click: previewView\">\r\n\t\t\t\t\t\t<span class=\"glyphicon glyphicon-eye-open\"></span> Preview\r\n\t\t\t\t\t</button>\r\n\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Table' }, click: tableView\">\r\n\t\t\t\t\t\t<span class=\"glyphicon glyphicon-list-alt\"></span> Table\r\n\t\t\t\t\t</button>\r\n\t\t\t\t</div>\r\n\t\t\t\t\r\n\t\t\t\t<h4 style=\"margin-bottom:0;\" class=\"componentTitle\" data-bind=\"text: componentName\"></h4>\r\n\t\t\t\t\r\n\t\t\t\t<div style=\"display:inline-block;margin:5px 0 10px 0;\" data-bind=\"foreach: tags\">\r\n\t\t\t\t\t<span class=\"label label-default\" data-bind=\"text: $data\"></span>\r\n\t\t\t\t</div>\r\n\t\t\t\t\r\n\t\t\t\t<blockquote data-bind=\"visible: description, text: description\"></blockquote>\r\n\t\t\t\t\r\n\t\t\t\t<ul style=\"padding: 10px 30px;\" class=\"alert alert-danger\" data-bind=\"foreach: errors, visible: errors().length\">\r\n\t\t\t\t\t<li data-bind=\"html: $data\"></li>\r\n\t\t\t\t</ul>\r\n\t\t\t\t\r\n\t\t\t\t<!-- ko if: view() === 'Table' && pages.length -->\r\n\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tIncluded on <b data-bind=\"text: pages.length\"></b> pages\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div data-bind=\"foreach: pages\" class=\"list-group\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<a style=\"float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;\"\r\n\t\t\t\t\t\t\t\tclass=\"list-group-item\" data-bind=\"attr: { href: $data }, text: $data\"></a>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t\t<div class=\"row row-eq-height\" data-bind=\"css: { 'preview-max-height': view() === 'Preview' }\">\r\n\t\t\t<!-- ko if: view() === 'Table' -->\r\n\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t<h3 style=\"display:block;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<h4 style=\"display:block;width:100%;\">Required</h4>\r\n\t\t\t\t\t<table class=\"table table-striped table-bordered table-hover table-condensed\">\r\n\t\t\t\t\t\t<thead>\r\n\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t<th>Name</th>\r\n\t\t\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t\t\t<th>Type(s)</th>\r\n\t\t\t\t\t\t\t\t<th>Required</th>\r\n\t\t\t\t\t\t\t\t<th>Default</th>\r\n\t\t\t\t\t\t\t\t<th>Possible Values</th>\r\n\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t</thead>\r\n\t\t\t\t\t\t<tbody data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: name\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: description\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"foreach: typeFormatted\">\r\n\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-preview--dataType\">\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: $data\"></span>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: required\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"text: defaultValue\"></td>\r\n\t\t\t\t\t\t\t\t<td data-bind=\"foreach: possibleValues\">\r\n\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-preview--dataType\">\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: paramAsText($data)\"></span>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t</tbody>\r\n\t\t\t\t\t</table>\r\n\t\t\t\t</div>\r\n\t\t\t<!-- /ko -->\r\n\t\t\t<!-- ko if: view() === 'Preview' -->\r\n\t\t\t\t<div class=\"col-xs-6 col-lg-4 no-gutter styled-scrollbar\">\r\n\t\t\t\t\t<div class=\"list-group params-list\" data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t<div class=\"list-group-item\">\r\n\t\t\t\t\t\t\t<div class=\"form-group\">\r\n\t\t\t\t\t\t\t\t<h3>\r\n\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\"></span>\r\n\t\t\t\t\t\t\t\t\t<span class=\"badge\" data-bind=\"text: typeFormatted\"></span>\r\n\t\t\t\t\t\t\t\t</h3>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<p class=\"list-group-item-content\" data-bind=\"text: description\"></p>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<knockout-type-editor params=\"\r\n\t\t\t\t\t\t\t\t\tvalue: value,\r\n\t\t\t\t\t\t\t\t\ttypes: types,\r\n\t\t\t\t\t\t\t\t\trequired: required,\r\n\t\t\t\t\t\t\t\t\tdefaultValue: defaultValue,\r\n\t\t\t\t\t\t\t\t\tpossibleValues: possibleValues\"></knockout-type-editor>\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"col-xs-6 col-lg-8 no-gutter-right styled-scrollbar\" style=\"display:flex;flex-direction:column;\">\r\n\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 1 0\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">Preview</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"position: relative;\">\r\n\t\t\t\t\t\t\t<!-- ko if: !blackListedComponent -->\r\n\t\t\t\t\t\t\t\t<div data-bind='component: { name: componentName, params: componentParamObject }'></div>\r\n\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t<!-- ko if: blackListedComponent -->\r\n\t\t\t\t\t\t\t\t<div class=\"alert alert-danger\" style=\"margin:0;\">\r\n\t\t\t\t\t\t\t\t\t<span data-bind=\"text: componentName\"></span> can't preview itself\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tInclude Tags\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t<div data-bind=\"clipboard: htmlInclude\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"panel panel-default no-bottom-margin\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\tComponent Code\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t<div data-bind=\"clipboard: html\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t<!-- /ko -->\r\n\t\t</div>\r\n\t</div>\r\n</div>\r\n\r\n\r\n<br>\r\n<br>\r\n<br>";
 
 /***/ }),
 /* 16 */

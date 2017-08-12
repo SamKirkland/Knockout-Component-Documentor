@@ -21,27 +21,26 @@ ko.components.register('knockout-type-editor', {
 		var vm = this;
 
 		vm.value = params.value;
+		vm.types = params.types;
+		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
-			if (ko.unwrap(vm.typeEditing) === "[object Number]") {
+			if (ko.unwrap(vm.typeEditing) === ko.types.number) {
 				vm.value(parseInt(newValue));
 			}
-			else if (ko.unwrap(vm.typeEditing) === "[object Boolean]") {
+			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean) {
 				vm.value(JSON.parse(newValue));
 			}
 			else {
 				vm.value(newValue);
 			}
-
 		});
 		
 		vm.required = params.required;
 		vm.defaultValue = params.defaultValue;
 		vm.possibleValues = params.possibleValues || ko.observableArray();
 		
-		vm.type = ko.observableArray(params.type);
-		vm.typeEditing = params.typeEditing; // default to first item in list
 		
 		vm.uid = idGen.getId();
 		
@@ -49,6 +48,12 @@ ko.components.register('knockout-type-editor', {
 			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
 		};
 		
+		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
+			var found = type.match(/(?:\[\w+ )?(\w+)(?:\])?/i);
+			return found[1];
+			return type;
+		};
+
 		vm.colorizeData = function(data) {
 			var serialized = paramAsText(data);
 			
