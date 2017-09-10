@@ -70,7 +70,7 @@ Both the `required` and `optional` properties (see above) accept objects. Each o
 |:-----------------:|:-----------------------------:|:-----------------------------------------------------:|
 | description       | `string`                      | A description of the component                        |
 | defaultValue      | `object`                      | Only used for optional parameters, this is the default value if one isn't passed    |
-| type              | `single item` or `array`      | A single type or an array of types is supported, see the [Supported Types](http://...#supported-types) section |
+| type              | `single item` or `array`      | A single type or an array of types is supported, see the [Supported Types](#supported-types) section |
 | possibleValues    | `array[string,number,object]` | Place all possible values in this array, the editor will show them in a dropdown |
 
 
@@ -95,7 +95,7 @@ docs: {
 </knockout-component-preview>
 ```
 
-## [Supported Types](#supported-types)
+## Supported Types
 The following types are available within `ko.types` for describing parameter types.
 The editor will automatically pick the best editor for your parameter based on the type(s) you pass in.
 * `ko.types.object`
