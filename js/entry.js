@@ -22,6 +22,7 @@ ko.types = ko.types || {
 	function: 'function',
 	json: 'JSON',
 	html: 'HTML',
+	innerHtml: 'InnerHTML',
 	css: 'CSS',
 	ko: {
 		observable: 'ko observable',
@@ -143,8 +144,8 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 	
 	myCodeMirror.on("change", function(cm, change) {
 		// update the value binding with the codemirror changes
-		if (viewModel.value !== undefined) {
-			viewModel.value(cm.getValue());
+		if (viewModel.textBinding !== undefined) {
+			viewModel.textBinding(cm.getValue());
 		}
 	});
 };

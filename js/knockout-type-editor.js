@@ -26,6 +26,11 @@ ko.components.register('knockout-type-editor', {
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
+			if (newValue === undefined || newValue.length === 0) {
+				vm.value("undefined");
+				return;
+			}
+
 			if (ko.unwrap(vm.typeEditing) === ko.types.number) {
 				vm.value(parseInt(newValue));
 			}

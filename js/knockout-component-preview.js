@@ -64,7 +64,6 @@ var componentDocumentationVM = function(parent, construct) {
 	var blackListedComponents = ['knockout-component-preview', 'knockout-type-editor'];
 	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
 
-
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
@@ -72,7 +71,7 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentParamObject = ko.computed(function(){
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
-			if (element.value() !== element.defaultValue) {
+			if (element.value() !== element.defaultValue && element.types[0] !== ko.types.innerHtml) {
 				paramObject[element.name] = element.value();
 			}
 		});
@@ -83,6 +82,7 @@ var componentDocumentationVM = function(parent, construct) {
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
 	
+	vm.innerHtml = ko.observable();
 	vm.html = ko.computed(function(){
 		var paramsList = [];
 		vm.params().map(function(param){ // Build up params
@@ -92,7 +92,8 @@ var componentDocumentationVM = function(parent, construct) {
 		});
 		
 		var paramsText = paramsList.join(",\n\t"); // format params
-		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'></${vm.componentName}>`;
+		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'>test</${vm.componentName}>`;
+		vm.innerHtml(computedHTML);
 		
 		// find code instance, and update it
 		// ToDo: fix this. make it less hacky
@@ -166,6 +167,26 @@ var paramVM = function(parent, construct){
 			});
 		});
 	});
+
+	vm.dataTypeClass = function(data) {
+		var typeAsString = `[object ${data}]`;
+		switch (typeAsString) {
+			case ko.types.number:
+				return "colorized-number";
+				
+			case ko.types.string:
+				return "colorized-string";
+				
+			case ko.types.boolean:
+				return "colorized-boolean";
+				
+			case ko.types.array:
+				return "colorized-array";
+			
+			default:
+				return "colorized-default";
+		}
+	};
 	
 	function convertToArray(data) {
 		if (ko.types.get(data) === ko.types.array) {
@@ -193,11 +214,6 @@ ko.components.register('knockout-component-preview', {
 				description: "should <knockout-component-preview> be included in the documentation output",
 				defaultValue: false,
 				type: ko.types.boolean
-			},
-			paramObjectName: {
-				description: "The name of the object the paramaters are set to within the knockout component",
-				defaultValue: "allParams",
-				type: ko.types.string
 			},
 			view: {
 				description: "Determines which view to show onload",

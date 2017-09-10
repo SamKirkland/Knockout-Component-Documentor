@@ -20,6 +20,8 @@
 				
 				<blockquote data-bind="visible: description, text: description"></blockquote>
 				
+				<!-- ko template: { nodes: $componentTemplateNodes, data: $data } --><!-- /ko -->
+
 				<ul style="padding: 10px 30px;" class="alert alert-danger" data-bind="foreach: errors, visible: errors().length">
 					<li data-bind="html: $data"></li>
 				</ul>
@@ -61,8 +63,8 @@
 								<td data-bind="text: name"></td>
 								<td data-bind="text: description"></td>
 								<td data-bind="foreach: typeFormatted">
-									<div class="knockout-component-preview--dataType">
-										<span data-bind="text: $data"></span>
+									<div class="knockout-component-preview--dataType" data-bind="css: $parent.dataTypeClass($data)">
+										<span data-bind="html: $data"></span>
 									</div>
 								</td>
 								<td data-bind="text: required"></td>
@@ -135,7 +137,7 @@
 							</div>
 						</div>
 						<div class="panel-body" style="padding:0;">
-							<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
+							<textarea class="html" data-bind="text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }"></textarea>
 						</div>
 					</div>
 				</div>

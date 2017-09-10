@@ -48,6 +48,11 @@ ko.components.register('random-sample-component', {
 				description: "js array",
 				defaultValue: "something",
 				type: ko.types.array
+			},
+			innerHtml: {
+				description: "Passes through the HTML",
+				defaultValue: "",
+				type: ko.types.innerHtml
 			}
 		}
 	},

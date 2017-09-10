@@ -45,7 +45,10 @@
 	<!-- ko if: typeEditing() === ko.types.object || typeEditing() === ko.types.json -->
 		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 	<!-- /ko -->
+	<!-- ko if: typeEditing() === ko.types.html || typeEditing() === ko.types.innerHtml -->
+		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
+	<!-- /ko -->
 	<!-- ko if: typeEditing() === ko.types.ko.observable || typeEditing() === ko.types.ko.observableArray -->
-		<textarea class="html" data-bind="text: textBinding, uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
+		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
 	<!-- /ko -->
 <!-- /ko -->
