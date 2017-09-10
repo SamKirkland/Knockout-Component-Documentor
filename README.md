@@ -3,8 +3,12 @@
 ## Description
 A Knockout.js component that generates documentation for your Knockout components.
 
-## Usage
-1. Include the component js file 'knockout-component-preview.js' (under the src folder) in your project
+Drop this component on a page and it will create a live preview and editor for every component you have registered on a page. The recommended use case for this is a internal only page/subdomain that where developers, QA, and shareholders can see all available UI component options and quickly protoype with the existing parameters.
+
+## Installing
+Note: NPM package is in the roadmap
+
+1. Include the component js file `knockout-component-preview.js` and `clipboard.min.js` in your project
 2. Add the CSS and JS on your page:
 ```html
 <link rel="stylesheet" type="text/css" href="knockout-component-preview.css" />
@@ -34,6 +38,11 @@ ko.components.register('my-documented-component', {
 				description: "This is an example optional param",
 				defaultValue: 35,
 				type: ko.types.number
+			},
+			anotherOptionalParam: {
+			    description: "An optional param with multiple allowed types and no defaultValue",
+			    defaultValue: undefined,
+			    type: [ko.types.string, ko.types.string.observable]
 			}
 		}
 	},
@@ -44,7 +53,7 @@ ko.components.register('my-documented-component', {
 
 
 #### Properties
-Knockout Component Documentor supports many properties, if the following properties aren't sufficient see the custom properties section below.
+Knockout Component Preivew supports many properties, if the following properties aren't sufficient see the custom properties section.
 
 | Property      | Type          | Description                                           |
 |:-------------:|:-------------:|:-----------------------------------------------------:|
@@ -60,9 +69,9 @@ Both the `required` and `optional` properties (see above) accept objects. Each o
 | Property          | Type                          | Description                                           |
 |:-----------------:|:-----------------------------:|:-----------------------------------------------------:|
 | description       | `string`                      | A description of the component                        |
-| defaultValue      | `object`                      | Place documentation for required parameters here      |
-| type              | `single item` or `array`      | A single type or an array of types are supported, see the [Supported Types](http://...#supported-types) section |
-| possibleValues    | `array[string|number|object]` | Place all possible values in this array, the editor will shhow them in a dropdown |
+| defaultValue      | `object`                      | Only used for optional parameters, this is the default value if one isn't passed    |
+| type              | `single item` or `array`      | A single type or an array of types is supported, see the [Supported Types](http://...#supported-types) section |
+| possibleValues    | `array[string,number,object]` | Place all possible values in this array, the editor will show them in a dropdown |
 
 
 ## Custom Properties
@@ -76,15 +85,19 @@ docs: {
     myCustomParam: "You can have unlimited custom params, you can also use any type (Object, string, array, etc...)"
 }
 ```
-2. Then specify how you want them to be displayed by passing in innerHTML into the component. You can also you any other params or inner HTML vars the component uses in this innerHTML!
+2. Then specify how you want them to be displayed by passing in innerHTML into the component. You can also use any other params, you can even use internal variables knockout component preview sets.
 ```html
 <knockout-component-preview>
-    <div data-bind="text: myCustomParam"></div>
+    <!-- ko if: myCustomParam -->
+        This will only be displayed when a component sets the myCustomParam.<br>
+        myCustomParam value: <div data-bind="text: myCustomParam"></div>
+    <!-- /ko -->
 </knockout-component-preview>
 ```
 
 ## [Supported Types](#supported-types)
-The variable `ko.types` is available for describing parameter types:
+The following types are available within `ko.types` for describing parameter types.
+The editor will automatically pick the best editor for your parameter based on the type(s) you pass in.
 * `ko.types.object`
 * `ko.types.date`
 * `ko.types.dateTime`
@@ -102,7 +115,48 @@ The variable `ko.types` is available for describing parameter types:
 Knockout types are also supported by appending `.observable`, `.observableArray`, or `.computed` to the end of the type.
 Example: `ko.types.string.observable`
 
-If you attempt to use another type you will get a red "Unsupported Type" message within the offending component
+If you attempt to a type not listed above you will get a red "Unsupported Type" message within the offending component
+
+## Settings
+All settings are optional. Pass the params into the component.
+
+| Property              | Type              | Default           | Description                                           |
+|:---------------------:|:-----------------:|:-----------------:|:-----------------------------------------------------:|
+| componentsToPreview   | `observableArray` | `[]`              | The ko.observableArray that will be updated with components being previewed |
+| documentSelf          | `boolean`         | `false`           | Should `<knockout-component-preview>` be included in the documentation output |
+| view                  | `string`          | `undefined`       | Determines which view to show onload, pass "dynamicEdit" or "table" |
+| includeFn             | `function`        | `function(componentName)`    | A function used transform the component name into your include tags |
+| autoDocument          | `boolean`         | `false`           | (Currently Does Nothing!) Attempts to infer paramaters, types, and defaultValues of viewmodel |
+| whitelist          | `string[]`         | `undefined`           | (Currently Does Nothing!) Pass in a list of knockout components. The documentor will only document the passed components instead of all registered |
+| blacklist          | `string[]`         | `undefined`           | (Currently Does Nothing!) The same as whitelist but inverted. If you pass both whitelist and blacklist you will get an error. |
+
+##### Example:
+```html
+<knockout-component-preview params="
+    includeFn: function(componentName){
+        return `<script src='/yourCustomFolder/${componentName}.js'></script>`;
+    }
+">
+</knockout-component-preview>
+```
+
+## Issues & Solutions
+
+##### No description provided
+The description is a required parameter when documenting a component. To fix this add the description key to your component.
+If you don't want the component to be displayed in your documentation use the blacklist setting.
+
+
+
+## Roadmap
+1. Style/UX updates - Move components to their own pages
+2. autoDocument option
+3. whiteList and blackList options
+4. Support for live innerHTML in the preview
+5. Support for defining examples
+6. NPM package
+7. React version
+8. Angular version
 
 
 ## License
