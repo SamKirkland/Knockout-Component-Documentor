@@ -151,28 +151,15 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 };
 
 
-
-
-
-
-
-
-
-
-
 require("./knockout-documentation-search.js");
 require("./knockout-component-preview.js");
 require("./random-sample-component.js");
 
 
-
 $(document).ready(function(){
-	var pageVM = function() {
-		var vm = this;
-		
-		vm.domChangeEvent = ko.observable();
-		vm.componentsToPreviewList = ko.observableArray();
+	var pageVM = {
+		selectedComponent: ko.observable()
 	};
-	
-	ko.applyBindings(new pageVM());
+
+	ko.applyBindings(pageVM);
 });

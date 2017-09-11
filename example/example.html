@@ -45,32 +45,35 @@
 		<script src="../dist/knockout-component-preview.bundle.js"></script>
 		<link rel="stylesheet" href="exampleStyles.css">
 	</head>
-	<body data-spy="scroll" data-target="#myScrollspy" data-offset="0">
-		<div class="container-fluid">
-			<div class="row">
-				<div class="col-xs-3 col-lg-2" id="myScrollspy">
-					<div class="col-xs-3 col-lg-2 affix" style="margin-top:25px;">
-						<documentation-search params="links: componentsToPreviewList, showSearch: true, domChange: domChangeEvent"></documentation-search>
-					</div>
+	<body>
+		<div class="wrapper">
+			<!-- Sidebar Holder -->
+			<nav id="sidebar">
+				<div class="sidebar-header">
+					<h3 style="margin:0;text-align:center;">UI Components</h3>
 				</div>
-				
-				<!--Main Content -->
-				<div class="col-xs-9 col-lg-10">
-					<section id="knockout-components" class="group">
-						<h3>Knockout Components</h3>
-						
-						<knockout-component-preview params="
-							documentSelf: true,
-							componentsToPreviewList: componentsToPreviewList,
-							includeFn: function(componentName){ return `// Add to the top of the page you would like to use the component\r<script src='/yourCustomFolder/${componentName}.js'></script>`; }
-						">
-						</knockout-component-preview>
-						
-					</section>
-				</div>
+
+				<documentation-search params="
+					documentSelf: true,
+					showSearch: true,
+					selectedComponent: selectedComponent
+				"></documentation-search>
+			</nav>
+
+			<!-- Page Content Holder -->
+			<div id="content">
+				<section id="knockout-components" class="group">
+					<knockout-component-preview params="
+						documentSelf: true,
+						componentName: selectedComponent,
+						includeFn: function(componentName) {
+							return `
+// Add to the top of the page you would like to use the component
+<script src='/yourCustomFolder/${componentName}.js'></script>`;
+						}
+					"></knockout-component-preview>
+				</section>
 			</div>
 		</div>
-		
-		
 	</body>
 </html>

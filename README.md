@@ -149,14 +149,13 @@ If you don't want the component to be displayed in your documentation use the bl
 
 
 ## Roadmap
-1. Style/UX updates - Move components to their own pages
-2. autoDocument option
-3. whiteList and blackList options
-4. Support for live innerHTML in the preview
-5. Support for defining examples
-6. NPM package
-7. React version
-8. Angular version
+1. autoDocument option
+2. whiteList and blackList options
+3. Support for live innerHTML in the preview
+4. Support for defining examples
+5. NPM package
+6. React version
+7. Angular version
 
 
 ## License

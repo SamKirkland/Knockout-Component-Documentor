@@ -3,6 +3,7 @@ require("./knockout-type-editor.scss");
 ko.components.register('knockout-type-editor', {
 	docs: {
 		description: "Edit javascript or knockout types",
+		tags: ["internal for knockout-component-preview"],
 		required: {
 			type: {
 				description: "A javascript or knockout type. The editor will edit that type",

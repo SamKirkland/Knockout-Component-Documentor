@@ -1,6 +1,13 @@
 require("./knockout-component-preview.scss");
 require("./knockout-type-editor.js");
 
+function getAllComponents() {
+	return ko.components.Cc;
+}
+
+function componentExists(componentName) {
+	return typeof getAllComponents()[ko.unwrap(componentName)] !== undefined;
+}
 
 function addOrError(item, errorArray, errorMessage) {
 	if (item === undefined) {
@@ -14,44 +21,47 @@ function addOrError(item, errorArray, errorMessage) {
 var componentPreviewVM = function(params, componentInfo) {
 	var vm = this;
 	
-	vm.docKeyName = params.docKeyName || "docs"; // The key to look for, defaults to "docs"
-	vm.includeFn = params.includeFn;
-	vm.selfDocument = params.selfDocument || false; // Document own componentsm defaults to false
-	vm.componentsToPreviewList = params.componentsToPreviewList;
-	
-	vm.components = []; // An array of componentDocumentationVM's
-	
-	// add all registered components
-	$.each(ko.components.Cc, function(key, componentRegistration){
-		var docs = componentRegistration.docs;
-		componentRegistration.name = key;
-		vm.components.push(new componentDocumentationVM(vm, componentRegistration));
-		if (vm.componentsToPreviewList !== undefined) {
-			vm.componentsToPreviewList.push({
-				name: key,
-				description: docs.description,
-				tags: docs.tags,
-				visible: ko.observable(true)
-			});
-		}
+	var defaultIncludeFn = function(componentName) { return `<script src="/js/${componentName}.js"></script>`; };
+	var includeFn = params.includeFn || defaultIncludeFn;
+
+	if (!componentExists(params.componentName)) {
+		// addOrError(paramsTempArray, vm.errors, `Component "${params.componentName}" can't be documented because its not registered on the page.`);
+		return;
+	}
+
+	vm.componentName = params.componentName;
+
+	// script tag generator
+	vm.htmlInclude = includeFn(ko.unwrap(vm.componentName));
+
+	vm.componentName.subscribe(function(newComponent){
+		vm.viewModel(
+			new componentDocumentationVM(vm, getAllComponents()[newComponent])
+		);
 	});
-	
+
+	vm.viewModel = ko.observable(
+		new componentDocumentationVM(vm, getAllComponents()[vm.componentName()])
+	);
+
 	return vm;
 };
 
 var componentDocumentationVM = function(parent, construct) {
 	var vm = this;
-	var component = construct[parent.docKeyName];
+	var component = construct.docs;
 	
 	vm.errors = ko.observableArray();
-	vm.componentName = construct.name;
+
+	vm.componentName = parent.componentName();
+	vm.htmlInclude = parent.htmlInclude;
 	vm.componentID = `goto-${vm.componentName}`;
 	
 	vm.description = addOrError(
 		construct.docs.description,
 		vm.errors,
 		`<b>No description provided</b><br>
-		To fix this error add a new key 'description' to the component, <a href="#">example</a>.`
+		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Preview#no-description-provided">example</a>.`
 	); // A description of the component
 	
 	vm.pages = construct.docs.pages || []; // A list of pages these components are used on
@@ -60,7 +70,7 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.view = ko.observable(construct.view || "Table"); // View can be Table or Preview, defaults to Table
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
-	
+
 	var blackListedComponents = ['knockout-component-preview', 'knockout-type-editor'];
 	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
 
@@ -105,32 +115,25 @@ var componentDocumentationVM = function(parent, construct) {
 		return computedHTML;
 	});
 	
-	// script tag generator
-	if (parent.includeFn) {
-		vm.htmlInclude = parent.includeFn(vm.componentName);
-	}
-	else {
-		vm.htmlInclude = `<script src="/js/${vm.componentName}.js"></script>`;
-	}
 	
 	// add the paramaters to the paramater list
 	var paramsTempArray = [];
 	
 	// if component they didn't add the documentation param end here
 	if (component === undefined) {
-		addOrError(paramsTempArray, vm.errors, `No key {parent.docKeyName} defined`);
+		addOrError(paramsTempArray, vm.errors, `No documentation defined`);
 		return vm;
 	}
 	
 	if (component && !jQuery.isEmptyObject(component.required)) {
-		$.each(construct[parent.docKeyName].required, function(key, paramObj) {
+		$.each(construct.docs.required, function(key, paramObj) {
 			paramObj.required = true;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
 		});
 	}
 	if (component && !jQuery.isEmptyObject(component.optional)) {
-		$.each(construct[parent.docKeyName].optional, function(key, paramObj) {
+		$.each(construct.docs.optional, function(key, paramObj) {
 			paramObj.required = false;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
@@ -203,13 +206,9 @@ var paramVM = function(parent, construct){
 ko.components.register('knockout-component-preview', {
 	docs: {
 		description: "Documents Knockout.js components",
+		tags: ["internal for knockout-component-preview"],
 		required: {},
 		optional: {
-			componentsToPreview: {
-				description: "The ko.observableArray that will be updated with components being previewed",
-				defaultValue: undefined,
-				type: ko.types.ko.observableArray
-			},
 			documentSelf: {
 				description: "should <knockout-component-preview> be included in the documentation output",
 				defaultValue: false,

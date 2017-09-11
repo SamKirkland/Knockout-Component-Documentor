@@ -1,16 +1,27 @@
-<div class="form-group" data-bind="visible: showSearch">
-	<input type="text" class="form-control"
+<div class="form-group" data-bind="visible: showSearch" style="margin:10px 10px 0 10px;">
+	<input type="text" style="border-radius: 0;" class="form-control"
 		data-bind="attr: { placeholder: placeholderText }, textInput: searchInput">
 	<span class="input-group-btn"></span>
 </div>
 
-<nav class="bs-docs-sidebar">
-	<ul class="nav">
-		<li>
-			<a href="#knockoutComponents">Knockout Components</a> 
-			<ul class="nav" data-bind="foreach: links">
-				<li><a data-bind="attr: { href: '#goto-' + name }, text: name, visible: visible"></a></li>
-			</ul>
-		</li>
-	</ul>
-</nav>
+<ul class="list-unstyled components" data-bind="foreach: components">
+	<li data-bind="css: { 'active': isActive }">
+		<a data-bind="
+			attr: { href: '#goto-' + name },
+			text: name,
+			click: function(){ click($parent); },
+			visible: visible"></a>
+	</li>
+
+	<!-- Example of a dropdown
+	<li class="active">
+		<a href="#">About</a>
+		<a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false">Pages</a>
+		<ul class="collapse list-unstyled" id="pageSubmenu">
+			<li><a href="#">Page 1</a></li>
+			<li><a href="#">Page 2</a></li>
+			<li><a href="#">Page 3</a></li>
+		</ul>
+	</li>
+	-->
+</ul>

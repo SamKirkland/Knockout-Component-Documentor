@@ -1,9 +1,7 @@
-knockout-type-editor {
-	display: block;
+body {
+	font-family: sans-serif;
+	background: #fafafa;
 }
-
-
-
 
 .knockout-component-preview--dataType {
 	background: rgba(0,0,0,.075);
@@ -16,87 +14,18 @@ knockout-type-editor {
 	margin: 0 4px 4px 0;
 }
 
-
-
-
-
-
-
-ul.nav-pills {
-	top: 20px;
-	position: fixed;
-}
-div.col-sm-9 div {
-	height: 250px;
-	font-size: 28px;
-}
-
 .active > a {
 	background: blue;
 }
 
 
-
 .group {
 	background: #fff;
+	padding: 25px;
 }
 .group .subgroup {
 	background: #fff;
 }
-.fixed {
-	position: fixed;
-}
-
-/* sidebar */
-.bs-docs-sidebar {
-	margin-top: 20px;
-	margin-bottom: 20px;
-}
-
-
-/* all links */
-.bs-docs-sidebar .nav>li>a {
-	color: #999;
-	border-left: 2px solid transparent;
-	padding: 4px 20px;
-	font-size: 13px;
-	font-weight: 400;
-}
-
-/* nested links */
-.bs-docs-sidebar .nav .nav>li>a {
-	padding-top: 1px;
-	padding-bottom: 1px;
-	padding-left: 30px;
-	font-size: 12px;
-}
-
-/* active & hover links */
-.bs-docs-sidebar .nav>.active>a, 
-.bs-docs-sidebar .nav>li>a:hover, 
-.bs-docs-sidebar .nav>li>a:focus {
-	color: #563d7c;                 
-	text-decoration: none;          
-	background-color: transparent;  
-	border-left-color: #563d7c; 
-}
-/* all active links */
-.bs-docs-sidebar .nav>.active>a, 
-.bs-docs-sidebar .nav>.active:hover>a,
-.bs-docs-sidebar .nav>.active:focus>a {
-	font-weight: 700;
-}
-/* nested active links */
-.bs-docs-sidebar .nav .nav>.active>a, 
-.bs-docs-sidebar .nav .nav>.active:hover>a,
-.bs-docs-sidebar .nav .nav>.active:focus>a {
-	font-weight: 500;
-}
-
-
-
-
-
 
 
 
@@ -139,35 +68,12 @@ div.col-sm-9 div {
 	padding-left: 0;
 }
 
-
-
 .componentTitle {
 	font-size: 35px;
 	padding: 0;
 	font-weight: bold;
 }
 
-
-.list-group-item-text.list-group-item {
-	border-style: dashed;
-	border-width: 2px;
-	border-right: none;
-	border-bottom: none;
-	border-left: none;
-	margin: 0 -15px 0 -15px;
-}
-
-
-
-
-.list-group-item-text {
-	padding-top: 30px;
-}
-
-
-.list-group-item-heading {
-	font-size: 16px;
-}
 
 .list-group-item {
 	background: transparent;
@@ -184,3 +90,77 @@ div.col-sm-9 div {
 }
 
 
+
+
+/* ---------------------------------------------------
+	SIDEBAR STYLE
+----------------------------------------------------- */
+#sidebar {
+	width: 250px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100vh;
+	z-index: 999;
+	background: #7386D5;
+	color: #fff;
+	transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+	padding: 20px;
+	background: #6d7fcc;
+}
+
+#sidebar ul.components {
+	padding: 20px 0;
+	border-bottom: 1px solid #47748b;
+}
+
+#sidebar ul li a {
+	padding: 10px;
+	font-size: 1.1em;
+	display: block;
+}
+#sidebar ul li a:hover {
+	color: #7386D5;
+	background: #fff;
+}
+
+#sidebar ul li.active > a, a[aria-expanded="true"] {
+	color: #fff;
+	background: #5469c3;
+}
+
+
+#sidebar a, #sidebar a:hover, #sidebar a:focus {
+	color: inherit;
+	text-decoration: none;
+	transition: all 0.3s;
+}
+
+/* ---------------------------------------------------
+	CONTENT STYLE
+----------------------------------------------------- */
+#content {
+	width: calc(100% - 250px);
+	padding: 40px;
+	min-height: 100vh;
+	transition: all 0.3s;
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+
+/* ---------------------------------------------------
+	MEDIAQUERIES
+----------------------------------------------------- */
+@media (max-width: 768px) {
+	#sidebar {
+		margin-left: -250px;
+	}
+	#content {
+		width: 100%;
+	}
+}
