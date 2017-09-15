@@ -4,6 +4,7 @@ ko.components.register('knockout-type-editor', {
 	docs: {
 		description: "Edit javascript or knockout types",
 		tags: ["internal for knockout-component-preview"],
+		category: "Knockout Preview",
 		required: {
 			type: {
 				description: "A javascript or knockout type. The editor will edit that type",

@@ -207,6 +207,7 @@ ko.components.register('knockout-component-preview', {
 	docs: {
 		description: "Documents Knockout.js components",
 		tags: ["internal for knockout-component-preview"],
+		category: "Knockout Preview",
 		required: {},
 		optional: {
 			documentSelf: {

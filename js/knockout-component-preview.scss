@@ -39,7 +39,14 @@
   }
 }
 
-
+.param-name {
+  background: #ddd;
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+tr:hover .param-name {
+  background: #ccc;
+}
 
 .styled-scrollbar {
   background-color: rgba(0,0,0,.2);

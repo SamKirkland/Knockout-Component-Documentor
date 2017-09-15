@@ -22,14 +22,18 @@ var link = function(name, docs){
 		parent.selectedComponent(vm.name);
 	};
 
+	vm.category = docs.category;
+
 	return vm;
 };
+
 
 // Automatically builds out the documentation navigation
 ko.components.register('documentation-search', {
 	docs: {
 		description: "Creates a list of links which will update selectedComponent when clicked",
 		tags: ["internal for knockout-component-preview"],
+		category: "Knockout Preview",
 		required: {
 			selectedComponent: {
 				description: "This observable will be updated with the selected components name",
@@ -74,6 +78,28 @@ ko.components.register('documentation-search', {
 		$.each(getAllComponents(), function(key, componentRegistration){
 			self.components.push(new link(key, componentRegistration.docs));
 		});
+
+		// a list of components that have no category
+		self.componentsWOCategory = self.components.filter(function(x){
+			return x.category === undefined;
+		});
+
+		// a list of components with categories. Grouped into there categories
+		var groupedCategories =self.components
+			.filter(function(x){
+				return x.category !== undefined;
+			});
+
+		var group_to_values = groupedCategories.reduce(function(obj,item){
+			obj[item.category] = obj[item.category] || [];
+			obj[item.category].push(item);
+			return obj;
+		}, {});
+
+		self.componentsCategory = Object.keys(group_to_values).map(function(key){
+			return {group: key, subMenus: group_to_values[key]};
+		});
+
 
 		if (self.selectedComponent() === undefined) {
 			self.selectedComponent(Object.keys(getAllComponents())[0]);

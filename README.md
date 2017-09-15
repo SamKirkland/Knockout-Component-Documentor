@@ -27,6 +27,7 @@ Add documentation when you register a component.
 ko.components.register('my-documented-component', {
 	docs: {
 		description: "A simple example with one required param and one optional param",
+		category: "Example Components"
 		required: {
 			importantParam: {
 				description: "This is a required param, notice it has no defaultValue specified",
@@ -55,13 +56,14 @@ ko.components.register('my-documented-component', {
 #### Properties
 Knockout Component Preivew supports many properties, if the following properties aren't sufficient see the custom properties section.
 
-| Property      | Type          | Description                                           |
-|:-------------:|:-------------:|:-----------------------------------------------------:|
-| description   | `string`      | A description of the component                        |
-| required      | `object`      | Place documentation for required parameters here      |
-| optional      | `object`      | Place documentation for optional parameters here      |
-| tags          | `string[]`    | Displayed under the title and searchable in the navigation |
-| pages         | `string[]`    | Displayed under the description, the strings should be valid links to the pages this component is used on. Useful for regression testing |
+| Property      		| Type          | Description                                           |
+|:---------------------:|:-------------:|:-----------------------------------------------------:|
+| description   		| `string`      | A description of the component                        |
+| required      		| `object`      | Place documentation for required parameters here      |
+| optional      		| `object`      | Place documentation for optional parameters here      |
+| category (optional)	| `string`      | Components with a category defined will appear within a submenu. Components with the same category (case sensitive) are grouped into the same submenu |
+| tags (optional)		| `string[]`    | Displayed under the title and searchable in the navigation |
+| pages (optional)		| `string[]`    | Displayed under the description, the strings should be valid links to the pages this component is used on. Useful for regression testing |
 
 #### Documenting Parameters
 Both the `required` and `optional` properties (see above) accept objects. Each object documents a parameter. See which keys you can use to describe your parameters below.
@@ -127,8 +129,8 @@ All settings are optional. Pass the params into the component.
 | view                  | `string`          | `undefined`       | Determines which view to show onload, pass "dynamicEdit" or "table" |
 | includeFn             | `function`        | `function(componentName)`    | A function used transform the component name into your include tags |
 | autoDocument          | `boolean`         | `false`           | (Currently Does Nothing!) Attempts to infer paramaters, types, and defaultValues of viewmodel |
-| whitelist          | `string[]`         | `undefined`           | (Currently Does Nothing!) Pass in a list of knockout components. The documentor will only document the passed components instead of all registered |
-| blacklist          | `string[]`         | `undefined`           | (Currently Does Nothing!) The same as whitelist but inverted. If you pass both whitelist and blacklist you will get an error. |
+| whitelist          	| `string[]`        | `undefined`		| (Currently Does Nothing!) Pass in a list of knockout components. The documentor will only document the passed components instead of all registered |
+| blacklist          	| `string[]`        | `undefined`		| (Currently Does Nothing!) The same as whitelist but inverted. If you pass both whitelist and blacklist you will get an error. |
 
 ##### Example:
 ```html

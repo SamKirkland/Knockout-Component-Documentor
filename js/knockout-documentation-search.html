@@ -4,24 +4,28 @@
 	<span class="input-group-btn"></span>
 </div>
 
-<ul class="list-unstyled components" data-bind="foreach: components">
+<ul class="list-unstyled components">
+	<!-- ko foreach: componentsCategory -->
+		<li>
+			<a data-bind="text: group, attr: { href: ('#' + group.replace(/\s+/g, '-')) }" data-toggle="collapse" aria-expanded="false" class="subMenu"></a>
+			<ul class="collapse list-unstyled" data-bind="foreach: subMenus, attr: { id: (group.replace(/\s+/g, '-')) }">
+				<li>
+					<a data-bind="
+						attr: { href: '#goto-' + name },
+						text: name,
+						click: function(){ click($component); },
+						visible: visible"></a>
+				</li>
+			</ul>
+		</li>
+	<!-- /ko -->
+	<!-- ko foreach: componentsWOCategory -->
 	<li data-bind="css: { 'active': isActive }">
 		<a data-bind="
 			attr: { href: '#goto-' + name },
 			text: name,
-			click: function(){ click($parent); },
+			click: function(){ click($component); },
 			visible: visible"></a>
 	</li>
-
-	<!-- Example of a dropdown
-	<li class="active">
-		<a href="#">About</a>
-		<a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false">Pages</a>
-		<ul class="collapse list-unstyled" id="pageSubmenu">
-			<li><a href="#">Page 1</a></li>
-			<li><a href="#">Page 2</a></li>
-			<li><a href="#">Page 3</a></li>
-		</ul>
-	</li>
-	-->
+	<!-- /ko -->
 </ul>
