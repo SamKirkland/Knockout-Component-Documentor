@@ -42,7 +42,7 @@ ko.components.register('random-sample-component', {
 			koObservableArray: {
 				description: "knockout observableArray",
 				defaultValue: "something",
-				type: ko.types.ko.observableArray
+				type: ko.types.string.observableArray
 			},
 			jsArray: {
 				description: "js array",

@@ -24,7 +24,7 @@ ko.components.register('knockout-type-editor', {
 
 		vm.value = params.value;
 		vm.types = params.types;
-		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
+		vm.typeEditing = ko.observable(ko.types.getType(vm.types[0])); // default to first item in list
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
@@ -32,15 +32,14 @@ ko.components.register('knockout-type-editor', {
 				vm.value("undefined");
 				return;
 			}
-
-			if (ko.unwrap(vm.typeEditing) === ko.types.number) {
+			if (ko.unwrap(vm.typeEditing) === ko.types.number.baseType) {
 				vm.value(parseInt(newValue));
 			}
-			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean) {
+			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean.baseType) {
 				vm.value(JSON.parse(newValue));
 			}
 			else {
-				vm.value(newValue);
+				vm.value(ko.types.getType(newValue));
 			}
 		});
 		
@@ -56,7 +55,7 @@ ko.components.register('knockout-type-editor', {
 		};
 		
 		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
-			var found = type.match(/(?:\[\w+ )?(\w+)(?:\])?/i);
+			var found = ko.types.getType(type).match(/(?:\[\w+ )?(\w+)(?:\])?/i);
 			return found[1];
 			return type;
 		};

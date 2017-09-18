@@ -71,7 +71,7 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
 
-	var blackListedComponents = ['knockout-component-preview', 'knockout-type-editor'];
+	var blackListedComponents = ['knockout-component-preview', 'documentation-search', 'knockout-type-editor'];
 	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
 
 	/* DELETE THE FOLLOWING ------------------------------ */
@@ -174,16 +174,16 @@ var paramVM = function(parent, construct){
 	vm.dataTypeClass = function(data) {
 		var typeAsString = `[object ${data}]`;
 		switch (typeAsString) {
-			case ko.types.number:
+			case ko.types.number.baseType:
 				return "colorized-number";
 				
-			case ko.types.string:
+			case ko.types.string.baseType:
 				return "colorized-string";
 				
-			case ko.types.boolean:
+			case ko.types.boolean.baseType:
 				return "colorized-boolean";
 				
-			case ko.types.array:
+			case ko.types.array.baseType:
 				return "colorized-array";
 			
 			default:
@@ -192,7 +192,7 @@ var paramVM = function(parent, construct){
 	};
 	
 	function convertToArray(data) {
-		if (ko.types.get(data) === ko.types.array) {
+		if (ko.types.get(data) === ko.types.array.baseType) {
 			return data;
 		}
 		

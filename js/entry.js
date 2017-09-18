@@ -1,33 +1,57 @@
-// ex: types.get(prop) === types.number
 
+function knockoutType(baseType) {
+	this.baseType = baseType;
+
+	// knockout types
+	this.observable = `${baseType} observable`;
+	this.observableArray = `${baseType} observableArray`;
+	this.computed = `${baseType} computed`;
+
+	return this;
+}
+
+
+// ex: types.get(prop) === types.number
 ko.types = ko.types || {
 	get: function(prop) {
 		return Object.prototype.toString.call(prop);
 	},
+	getType: function(prop) {
+		if (typeof prop === "object") {
+			return prop.baseType;
+		}
+		else {
+			return prop;
+		}
+	},
 	getFormatted: function(prop, errorCallback) {
-		if (typesValues.indexOf(prop) === -1) {
+		var typeAsString;
+		if (typeof prop === "object") {
+			typeAsString = prop.baseType;
+		}
+		else {
+			typeAsString = prop;
+		}
+
+		if (typesValues.indexOf(typeAsString) === -1) {
 			errorCallback();
 			return "Unsupported Type";
 		}
 		
-		return prop.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
+		return typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
 	},
-	object: '[object Object]',
-	date: '[object Date]',
-	dateTime: 'DateTime',
-	array: '[object Array]',
-	string: '[object String]',
-	boolean: '[object Boolean]',
-	number: '[object Number]',
-	function: 'function',
-	json: 'JSON',
-	html: 'HTML',
-	innerHtml: 'InnerHTML',
-	css: 'CSS',
-	ko: {
-		observable: 'ko observable',
-		observableArray: 'ko observableArray'
-	}
+	object: new knockoutType('[object Object]'),
+	date: new knockoutType('[object Date]'),
+	dateTime: new knockoutType('DateTime'),
+	array: new knockoutType('[object Array]'),
+	string: new knockoutType('[object String]'),
+	boolean: new knockoutType('[object Boolean]'),
+	number: new knockoutType('[object Number]'),
+	function: new knockoutType('function'),
+	json: new knockoutType('JSON'),
+	html: new knockoutType('HTML'),
+	innerHtml: new knockoutType('InnerHTML'),
+	css: new knockoutType('CSS')
 };
 
 

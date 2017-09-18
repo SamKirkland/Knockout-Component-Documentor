@@ -12,20 +12,20 @@
 	</select>
 <!-- /ko -->
 <!-- ko if: possibleValues.length === 0 -->
-	<!-- ko if: typeEditing() === ko.types.date -->
+	<!-- ko if: typeEditing() === ko.types.date.baseType -->
 		<input type="date" class="form-control" data-bind="textInput: textBinding" />
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.dateTime -->
+	<!-- ko if: typeEditing() === ko.types.dateTime.baseType -->
 		<input type="datetime-local" class="form-control" data-bind="textInput: textBinding" />
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.array -->
+	<!-- ko if: typeEditing() === ko.types.array.baseType -->
 		Array editor...
 		<textarea class="html" data-bind="textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.string -->
+	<!-- ko if: typeEditing() === ko.types.string.baseType -->
 		<input type="text" class="form-control" data-bind="textInput: textBinding, value: defaultValue" />
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.boolean -->
+	<!-- ko if: typeEditing() === ko.types.boolean.baseType -->
 		<div class="radio">
 			<label>
 				<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
@@ -39,16 +39,13 @@
 			</label>
 		</div>
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.number -->
+	<!-- ko if: typeEditing() === ko.types.number.baseType -->
 		<input type="number" class="form-control" data-bind="textInput: textBinding" />
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.object || typeEditing() === ko.types.json -->
+	<!-- ko if: typeEditing() === ko.types.object.baseType || typeEditing() === ko.types.json.baseType -->
 		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.html || typeEditing() === ko.types.innerHtml -->
+	<!-- ko if: typeEditing() === ko.types.html.baseType || typeEditing() === ko.types.innerHtml.baseType -->
 		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
-	<!-- /ko -->
-	<!-- ko if: typeEditing() === ko.types.ko.observable || typeEditing() === ko.types.ko.observableArray -->
-		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'javascript' }"></textarea>
 	<!-- /ko -->
 <!-- /ko -->
