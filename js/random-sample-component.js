@@ -18,6 +18,11 @@ ko.components.register('random-sample-component', {
 				defaultValue: "default description",
 				type: ko.types.string
 			},
+			observable: {
+				description: "A knockout observable string, changing this param will auto unbind and rebind the component",
+				defaultValue: "observable string",
+				type: ko.types.string.observable
+			},
 			icon: {
 				description: "The icon to show below the title",
 				defaultValue: "glyphicon-user",
@@ -58,12 +63,12 @@ ko.components.register('random-sample-component', {
 	},
 	viewModel: function(params) {
 		var vm = this;
-		
-		vm.title = params.title || "Default Title";
-		vm.description = params.description || "default description";
-		vm.icon = params.icon || "glyphicon-refresh";
-		vm.showBorder = params.showBorder;
-		vm.borderWidth = params.borderWidth;
+
+		vm.title = ko.unwrap(params.title) || "Default Title";
+		vm.description = ko.unwrap(params.description) || "default description";
+		vm.icon = ko.unwrap(params.icon) || "glyphicon-refresh";
+		vm.showBorder = ko.unwrap(params.showBorder);
+		vm.borderWidth = ko.unwrap(params.borderWidth);
 
 		return vm;
 	},

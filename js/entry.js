@@ -16,6 +16,12 @@ ko.types = ko.types || {
 	get: function(prop) {
 		return Object.prototype.toString.call(prop);
 	},
+	getBaseType: function(prop) {
+		return ko.types.getType(prop).match(new RegExp(/(\[.*\])/i))[1];
+	},
+	compareType: function(prop1, prop2) {
+		return ko.types.getBaseType(prop1) === ko.types.getBaseType(prop2);
+	},
 	getType: function(prop) {
 		if (typeof prop === "object") {
 			return prop.baseType;
@@ -40,18 +46,29 @@ ko.types = ko.types || {
 		
 		return typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
 	},
+	isKnockout: function(type) {
+		var typeAsString;
+		if (typeof type === "object") {
+			typeAsString = type.baseType;
+		}
+		else {
+			typeAsString = type;
+		}
+
+		return typeAsString.indexOf('observable') >= 0 || typeAsString.indexOf('computed') >= 0;
+	},
 	object: new knockoutType('[object Object]'),
 	date: new knockoutType('[object Date]'),
-	dateTime: new knockoutType('DateTime'),
+	dateTime: new knockoutType('[object DateTime]'),
 	array: new knockoutType('[object Array]'),
 	string: new knockoutType('[object String]'),
 	boolean: new knockoutType('[object Boolean]'),
 	number: new knockoutType('[object Number]'),
-	function: new knockoutType('function'),
-	json: new knockoutType('JSON'),
-	html: new knockoutType('HTML'),
-	innerHtml: new knockoutType('InnerHTML'),
-	css: new knockoutType('CSS')
+	function: new knockoutType('[object function]'),
+	json: new knockoutType('[object JSON]'),
+	html: new knockoutType('[object HTML]'),
+	innerHtml: new knockoutType('[object InnerHTML]'),
+	css: new knockoutType('[object CSS]')
 };
 
 

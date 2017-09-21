@@ -526,6 +526,12 @@ ko.types = ko.types || {
 	get: function(prop) {
 		return Object.prototype.toString.call(prop);
 	},
+	getBaseType: function(prop) {
+		return ko.types.getType(prop).match(new RegExp(/(\[.*\])/i))[1];
+	},
+	compareType: function(prop1, prop2) {
+		return ko.types.getBaseType(prop1) === ko.types.getBaseType(prop2);
+	},
 	getType: function(prop) {
 		if (typeof prop === "object") {
 			return prop.baseType;
@@ -550,18 +556,29 @@ ko.types = ko.types || {
 		
 		return typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
 	},
+	isKnockout: function(type) {
+		var typeAsString;
+		if (typeof type === "object") {
+			typeAsString = type.baseType;
+		}
+		else {
+			typeAsString = type;
+		}
+
+		return typeAsString.indexOf('observable') >= 0 || typeAsString.indexOf('computed') >= 0;
+	},
 	object: new knockoutType('[object Object]'),
 	date: new knockoutType('[object Date]'),
-	dateTime: new knockoutType('DateTime'),
+	dateTime: new knockoutType('[object DateTime]'),
 	array: new knockoutType('[object Array]'),
 	string: new knockoutType('[object String]'),
 	boolean: new knockoutType('[object Boolean]'),
 	number: new knockoutType('[object Number]'),
-	function: new knockoutType('function'),
-	json: new knockoutType('JSON'),
-	html: new knockoutType('HTML'),
-	innerHtml: new knockoutType('InnerHTML'),
-	css: new knockoutType('CSS')
+	function: new knockoutType('[object function]'),
+	json: new knockoutType('[object JSON]'),
+	html: new knockoutType('[object HTML]'),
+	innerHtml: new knockoutType('[object InnerHTML]'),
+	css: new knockoutType('[object CSS]')
 };
 
 
@@ -713,8 +730,12 @@ var link = function(name, docs){
 	var vm = this;
 
 	vm.name = name;
+
+	docs = docs || {};
 	vm.description = docs.description;
 	vm.tags = docs.tags;
+	vm.category = docs.category;
+
 	vm.visible = ko.observable(true);
 	vm.isActive = ko.observable(false);
 
@@ -727,7 +748,6 @@ var link = function(name, docs){
 		parent.selectedComponent(vm.name);
 	};
 
-	vm.category = docs.category;
 
 	return vm;
 };
@@ -1013,13 +1033,20 @@ function componentExists(componentName) {
 }
 
 function addOrError(item, errorArray, errorMessage) {
-	if (item === undefined) {
+	if (typeof item === "undefined") {
 		errorArray.push(errorMessage);
 		return undefined;
 	}
 	
 	return item;
 };
+
+function defaultValue(value, defaultValue) {
+	if (typeof value === "undefined") {
+		return defaultValue;
+	}
+	return value;
+}
 
 var componentPreviewVM = function(params, componentInfo) {
 	var vm = this;
@@ -1052,7 +1079,7 @@ var componentPreviewVM = function(params, componentInfo) {
 
 var componentDocumentationVM = function(parent, construct) {
 	var vm = this;
-	var component = construct.docs;
+	var component = defaultValue(construct.docs, {});
 	
 	vm.errors = ko.observableArray();
 
@@ -1061,16 +1088,16 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentID = `goto-${vm.componentName}`;
 	
 	vm.description = addOrError(
-		construct.docs.description,
+		component.description,
 		vm.errors,
 		`<b>No description provided</b><br>
 		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Preview#no-description-provided">example</a>.`
 	); // A description of the component
 	
-	vm.pages = construct.docs.pages || []; // A list of pages these components are used on
-	vm.tags = construct.docs.tags || []; // A list of tags
+	vm.pages = defaultValue(component.pages, []); // A list of pages these components are used on
+	vm.tags = defaultValue(component.tags, []); // A list of tags
 	vm.params = ko.observableArray(); // A list of all params (required and optional)
-	vm.view = ko.observable(construct.view || "Table"); // View can be Table or Preview, defaults to Table
+	vm.view = ko.observable(defaultValue(construct.view, "Table")); // View can be Table or Preview, defaults to Table
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
 
@@ -1129,14 +1156,14 @@ var componentDocumentationVM = function(parent, construct) {
 	}
 	
 	if (component && !jQuery.isEmptyObject(component.required)) {
-		$.each(construct.docs.required, function(key, paramObj) {
+		$.each(component.required, function(key, paramObj) {
 			paramObj.required = true;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
 		});
 	}
 	if (component && !jQuery.isEmptyObject(component.optional)) {
-		$.each(construct.docs.optional, function(key, paramObj) {
+		$.each(component.optional, function(key, paramObj) {
 			paramObj.required = false;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
@@ -1339,6 +1366,7 @@ ko.components.register('knockout-type-editor', {
 			}
 		});
 		
+		
 		vm.required = params.required;
 		vm.defaultValue = params.defaultValue;
 		vm.possibleValues = params.possibleValues || ko.observableArray();
@@ -1439,7 +1467,7 @@ exports.push([module.i, "knockout-type-editor {\n  display: block; }\n", ""]);
 /* 14 */
 /***/ (function(module, exports) {
 
-module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $parent.typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: possibleValues.length > 0 -->\r\n\t<select data-width=\"100%\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }\">\r\n\t\t<option data-bind=\"attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n<!-- ko if: possibleValues.length === 0 -->\r\n\t<!-- ko if: typeEditing() === ko.types.date.baseType -->\r\n\t\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.dateTime.baseType -->\r\n\t\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.array.baseType -->\r\n\t\tArray editor...\r\n\t\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.string.baseType -->\r\n\t\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.boolean.baseType -->\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.number.baseType -->\r\n\t\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.object.baseType || typeEditing() === ko.types.json.baseType -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: typeEditing() === ko.types.html.baseType || typeEditing() === ko.types.innerHtml.baseType -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n\t<!-- /ko -->\r\n<!-- /ko -->";
+module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $parent.typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: possibleValues.length > 0 -->\r\n\t<select data-width=\"100%\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }\">\r\n\t\t<option data-bind=\"attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n<!-- ko if: possibleValues.length === 0 -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.date) -->\r\n\t\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.dateTime) -->\r\n\t\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.array) -->\r\n\t\tArray editor...\r\n\t\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.string) -->\r\n\t\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.boolean) -->\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->\r\n\t\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) || ko.types.compareType(typeEditing(), ko.types.json) -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n\t<!-- /ko -->\r\n<!-- /ko -->";
 
 /***/ }),
 /* 15 */
@@ -1470,6 +1498,11 @@ ko.components.register('random-sample-component', {
 				description: "A description under the title",
 				defaultValue: "default description",
 				type: ko.types.string
+			},
+			observable: {
+				description: "A knockout observable string, changing this param will auto unbind and rebind the component",
+				defaultValue: "observable string",
+				type: ko.types.string.observable
 			},
 			icon: {
 				description: "The icon to show below the title",
@@ -1511,12 +1544,12 @@ ko.components.register('random-sample-component', {
 	},
 	viewModel: function(params) {
 		var vm = this;
-		
-		vm.title = params.title || "Default Title";
-		vm.description = params.description || "default description";
-		vm.icon = params.icon || "glyphicon-refresh";
-		vm.showBorder = params.showBorder;
-		vm.borderWidth = params.borderWidth;
+
+		vm.title = ko.unwrap(params.title) || "Default Title";
+		vm.description = ko.unwrap(params.description) || "default description";
+		vm.icon = ko.unwrap(params.icon) || "glyphicon-refresh";
+		vm.showBorder = ko.unwrap(params.showBorder);
+		vm.borderWidth = ko.unwrap(params.borderWidth);
 
 		return vm;
 	},
