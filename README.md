@@ -22,7 +22,33 @@ Note: NPM package is in the roadmap
 ```
 
 ## Documenting Components
-Add documentation when you register a component.
+You have two options for documenting components. Automatically based on JSDocs and manually through setting the docs property when registering your component.
+
+### Automatically based on JSDocs
+Simply Run the command `"npm run document-components"` (it would be a good idea to add this to your build configuration)
+In order for jsDocs to work you must use the `@component` property and specify your component name
+Currently only a subset of properties that the manual configuration supports is supported in the jsDoc option
+
+```javascript
+/**
+ * @component jsdoc-sample-component
+ * @tags ["demo", "example", "tag", "test"]
+ * @description A quite wonderful component.
+ * @category JSDoc Folder
+ * @param {ko.observable(string)} params.obsString - A observable that is a string type
+ * @param {string} [params.defaultString=default value] - This param has a default value of "default value"
+ * @param {number} params.numParam - A param number type
+ * @param {ko.observable(number)} params.obsNumber - A observable that is a number type
+ */
+```
+
+Once your components are documented using JSDocs pass the location of your jsdocs.json file (created using the npm command above)
+```javascript
+jsdocs: { location: '../jsdocs.json', status: status }
+```
+
+### Manually
+Add documentation when you register a component. Place your documentation within the docs property.
 ```javascript
 ko.components.register('my-documented-component', {
 	docs: {
@@ -128,7 +154,7 @@ All settings are optional. Pass the params into the component.
 | documentSelf          | `boolean`         | `false`           | Should `<knockout-component-preview>` be included in the documentation output |
 | view                  | `string`          | `undefined`       | Determines which view to show onload, pass "dynamicEdit" or "table" |
 | includeFn             | `function`        | `function(componentName)`    | A function used transform the component name into your include tags |
-| autoDocument          | `boolean`         | `false`           | (Currently Does Nothing!) Attempts to infer paramaters, types, and defaultValues of viewmodel |
+| jsdocs                | `Object`          | `undefined`       | `jsdocs: { location: '../jsdocs.json', status: status }` |
 | whitelist          	| `string[]`        | `undefined`		| (Currently Does Nothing!) Pass in a list of knockout components. The documentor will only document the passed components instead of all registered |
 | blacklist          	| `string[]`        | `undefined`		| (Currently Does Nothing!) The same as whitelist but inverted. If you pass both whitelist and blacklist you will get an error. |
 

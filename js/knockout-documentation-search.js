@@ -8,8 +8,12 @@ var link = function(name, docs){
 	var vm = this;
 
 	vm.name = name;
+
+	docs = docs || {};
 	vm.description = docs.description;
 	vm.tags = docs.tags;
+	vm.category = docs.category;
+
 	vm.visible = ko.observable(true);
 	vm.isActive = ko.observable(false);
 
@@ -22,7 +26,6 @@ var link = function(name, docs){
 		parent.selectedComponent(vm.name);
 	};
 
-	vm.category = docs.category;
 
 	return vm;
 };

@@ -31,29 +31,28 @@ ko.types = ko.types || {
 		}
 	},
 	getFormatted: function(prop, errorCallback) {
-		var typeAsString;
-		if (typeof prop === "object") {
-			typeAsString = prop.baseType;
-		}
-		else {
-			typeAsString = prop;
-		}
+		var typeAsString = ko.types.getType(prop);
 
 		if (typesValues.indexOf(typeAsString) === -1) {
 			errorCallback();
 			return "Unsupported Type";
 		}
-		
-		return typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
+
+		var baseType = typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
+
+		// return type with observable/observableArray/computed
+		/*
+		var regexp = /\]\s+(\w+)/i;
+		if (regexp.test(typeAsString)) {
+			var matches = regexp.exec(typeAsString);
+			return `${matches[1]} ${baseType}`;
+		}
+		*/
+
+		return baseType;
 	},
 	isKnockout: function(type) {
-		var typeAsString;
-		if (typeof type === "object") {
-			typeAsString = type.baseType;
-		}
-		else {
-			typeAsString = type;
-		}
+		var typeAsString = ko.types.getType(prop);
 
 		return typeAsString.indexOf('observable') >= 0 || typeAsString.indexOf('computed') >= 0;
 	},
@@ -68,7 +67,8 @@ ko.types = ko.types || {
 	json: new knockoutType('[object JSON]'),
 	html: new knockoutType('[object HTML]'),
 	innerHtml: new knockoutType('[object InnerHTML]'),
-	css: new knockoutType('[object CSS]')
+	css: new knockoutType('[object CSS]'),
+	other: new knockoutType('[object Other]')
 };
 
 
@@ -195,11 +195,13 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 require("./knockout-documentation-search.js");
 require("./knockout-component-preview.js");
 require("./random-sample-component.js");
+require("./jsdoc-sample-component.js");
 
 
 $(document).ready(function(){
 	var pageVM = {
-		selectedComponent: ko.observable()
+		selectedComponent: ko.observable(),
+		status: ko.observable(false)
 	};
 
 	ko.applyBindings(pageVM);

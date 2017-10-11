@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "webpack --config webpack.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "document-components": "jsdoc2md js/*.js --json > jsdocs.json"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,9 @@
     "url": "https://github.com/SamKirkland/Knockout-Component-Preview/issues"
   },
   "homepage": "https://github.com/SamKirkland/Knockout-Component-Preview#readme",
+  "dependencies": {
+    "jsdoc-to-markdown": "^3.0.0"
+  },
   "devDependencies": {
     "css-loader": "^0.28.4",
     "html-loader": "^0.4.5",

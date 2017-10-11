@@ -1,0 +1,67 @@
+[
+  {
+    "id": "jsDocSampleComponentVM",
+    "longname": "jsDocSampleComponentVM",
+    "name": "jsDocSampleComponentVM",
+    "kind": "function",
+    "scope": "global",
+    "description": "A quite wonderful component.",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "ko.observable(string)"
+          ]
+        },
+        "description": "A observable that is a string type",
+        "name": "params.obsString"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "default value",
+        "description": "This param has a default value of \"default value\"",
+        "name": "params.defaultString"
+      },
+      {
+        "type": {
+          "names": [
+            "number"
+          ]
+        },
+        "description": "A param number type",
+        "name": "params.numParam"
+      },
+      {
+        "type": {
+          "names": [
+            "ko.observable(number)"
+          ]
+        },
+        "description": "A observable that is a number type",
+        "name": "params.obsNumber"
+      }
+    ],
+    "category": "JSDoc Folder",
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "jsdoc-sample-component"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"demo\", \"example\", \"tag\", \"test\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 14,
+      "filename": "jsdoc-sample-component.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Preview\\js"
+    },
+    "order": 0
+  }
+]

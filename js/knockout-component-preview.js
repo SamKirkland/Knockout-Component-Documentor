@@ -10,7 +10,7 @@ function componentExists(componentName) {
 }
 
 function addOrError(item, errorArray, errorMessage) {
-	if (item === undefined) {
+	if (typeof item === "undefined") {
 		errorArray.push(errorMessage);
 		return undefined;
 	}
@@ -18,11 +18,170 @@ function addOrError(item, errorArray, errorMessage) {
 	return item;
 };
 
+function defaultValue(value, defaultValue) {
+	if (typeof value === "undefined") {
+		return defaultValue;
+	}
+	return value;
+}
+
+function jsDocTypeToComponentType(jsDocType) {
+	var regexp = /ko\.(\w+)\((.*)\)/i;
+
+	if (!regexp.test(jsDocType)) {
+		// not a knockout type type
+		return jsDocToBaseType(jsDocType);
+	}
+
+
+	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
+	var matches = regexp.exec(jsDocType);
+	var baseType = jsDocToBaseType(matches[2]);
+
+	switch (matches[1].toLowerCase()) {
+		case "observable":
+			return baseType.observable;
+
+		case "observablearray":
+			return baseType.observableArray;
+
+		case "computed":
+			return baseType.computed;
+
+		default:
+			return baseType;
+	}
+}
+
+function jsDocToBaseType(jsDocType) {
+	switch (jsDocType.toLowerCase()) {
+		case "object":
+			return ko.types.object;
+
+		case "date":
+			return ko.types.date;
+
+		case "datetime":
+			return ko.types.dateTime;
+
+		case "array":
+			return ko.types.array;
+
+		case "string":
+			return ko.types.string;
+
+		case "boolean":
+			return ko.types.boolean;
+
+		case "number":
+			return ko.types.number;
+
+		case "function":
+			return ko.types.function;
+
+		case "json":
+			return ko.types.json;
+
+		case "html":
+			return ko.types.html;
+
+		case "innerhtml":
+			return ko.types.innerHtml;
+
+		case "css":
+			return ko.types.css;
+
+		default:
+			return ko.types.other;
+	}
+}
+
+function jsDocsToComponentDocs(jsDocs) {
+	var allComponents = [];
+
+	// ToDo: Only run conversion on items that use @component
+	$.each(jsDocs, function(index, jsDoc) {
+		var componentDocs = {
+			description: jsDoc.description,
+			category: jsDoc.category,
+			required: {},
+			optional: {}
+		};
+
+		// move params to required and optional objects
+		$.each(jsDoc.params, function(paramIndex, param) {
+			var objToAddTo = componentDocs.required;
+			if (param.optional) {
+				objToAddTo = componentDocs.optional;
+			}
+
+			// remove "params" from the front of each param
+			var paramName = param.name;
+			var regexp = /\w+\.(.*)/i;
+			if (regexp.test(paramName)) {
+				paramName = regexp.exec(paramName)[1];
+			}
+
+
+			// ToDo: Add possibleValues
+			// ToDo: Support types in defaultValue
+			// ToDo: Add support for multiple types
+			objToAddTo[paramName] = {
+				description: param.description,
+				defaultValue: param.defaultvalue,
+				type: jsDocTypeToComponentType(param.type.names[0])
+			};
+		});
+
+		// move all the custom tags onto the componentDocs object
+		$.each(jsDoc.customTags, function(customTagsIndex, customTag) {
+			if (customTag.tag === "tags") {
+				// try to convert tags to array
+				componentDocs[customTag.tag] = JSON.parse(customTag.value);
+			}
+			else {
+				componentDocs[customTag.tag] = customTag.value;
+			}
+		});
+
+		allComponents.push(componentDocs);
+	});
+
+	return allComponents;
+}
+
 var componentPreviewVM = function(params, componentInfo) {
 	var vm = this;
 	
 	var defaultIncludeFn = function(componentName) { return `<script src="/js/${componentName}.js"></script>`; };
 	var includeFn = params.includeFn || defaultIncludeFn;
+
+	vm.loadingComplete = ko.observable(false);
+
+	if (params.jsdocs !== undefined) {
+		if (location.protocol === 'file:') {
+			alert("jsdocs uses ajax to load in your doc file. This cannot be done on a local website. To fix this use localhost");
+		}
+		else {
+			// load the jsdoc json file
+			$.getJSON(params.jsdocs.location, function(jsDocs) {
+				var jsDocs = jsDocsToComponentDocs(jsDocs);
+
+				// add jsDocs to component registration
+				$.each(jsDocs, function(index, jsDoc) {
+					if (jsDoc.component !== undefined && componentExists(jsDoc.component)) {
+						var componentRegistration = getAllComponents()[jsDoc.component];
+
+						// merge jsDocs into docs
+						componentRegistration.docs = $.extend(true, componentRegistration.docs, jsDoc);
+					}
+				});
+
+				vm.loadingComplete(true);
+				params.jsdocs.status(true);
+			});
+		}
+	}
 
 	if (!componentExists(params.componentName)) {
 		// addOrError(paramsTempArray, vm.errors, `Component "${params.componentName}" can't be documented because its not registered on the page.`);
@@ -34,40 +193,45 @@ var componentPreviewVM = function(params, componentInfo) {
 	// script tag generator
 	vm.htmlInclude = includeFn(ko.unwrap(vm.componentName));
 
-	vm.componentName.subscribe(function(newComponent){
-		vm.viewModel(
-			new componentDocumentationVM(vm, getAllComponents()[newComponent])
-		);
-	});
+	// wait until jsDocs are loaded to get components
+	vm.loadingComplete.subscribe(function(){
+		vm.componentName.subscribe(function(newComponent){
+			vm.viewModel(
+				new componentDocumentationVM(vm, getAllComponents()[newComponent])
+			);
+		});
 
-	vm.viewModel = ko.observable(
-		new componentDocumentationVM(vm, getAllComponents()[vm.componentName()])
-	);
+		vm.viewModel = ko.observable();
+
+		if (vm.componentName() !== undefined) {
+			vm.viewModel(new componentDocumentationVM(vm, getAllComponents()[vm.componentName()]));
+		}
+	});
 
 	return vm;
 };
 
 var componentDocumentationVM = function(parent, construct) {
 	var vm = this;
-	var component = construct.docs;
+	var component = defaultValue(construct.docs, {});
 	
 	vm.errors = ko.observableArray();
 
 	vm.componentName = parent.componentName();
 	vm.htmlInclude = parent.htmlInclude;
 	vm.componentID = `goto-${vm.componentName}`;
-	
+
 	vm.description = addOrError(
-		construct.docs.description,
+		component.description,
 		vm.errors,
 		`<b>No description provided</b><br>
 		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Preview#no-description-provided">example</a>.`
 	); // A description of the component
 	
-	vm.pages = construct.docs.pages || []; // A list of pages these components are used on
-	vm.tags = construct.docs.tags || []; // A list of tags
+	vm.pages = defaultValue(component.pages, []); // A list of pages these components are used on
+	vm.tags = defaultValue(component.tags, []); // A list of tags
 	vm.params = ko.observableArray(); // A list of all params (required and optional)
-	vm.view = ko.observable(construct.view || "Table"); // View can be Table or Preview, defaults to Table
+	vm.view = ko.observable(defaultValue(construct.view, "Table")); // View can be Table or Preview, defaults to Table
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
 
@@ -97,12 +261,12 @@ var componentDocumentationVM = function(parent, construct) {
 		var paramsList = [];
 		vm.params().map(function(param){ // Build up params
 			if (param.value() !== param.defaultValue) { // Only add the param if it's not a default value
-				paramsList.push(`${param.name}: ${param.value()}`);
+				paramsList.push(`${param.name}: ${JSON.stringify(param.value())}`);
 			}
 		});
 		
 		var paramsText = paramsList.join(",\n\t"); // format params
-		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'>test</${vm.componentName}>`;
+		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'></${vm.componentName}>`;
 		vm.innerHtml(computedHTML);
 		
 		// find code instance, and update it
@@ -124,16 +288,16 @@ var componentDocumentationVM = function(parent, construct) {
 		addOrError(paramsTempArray, vm.errors, `No documentation defined`);
 		return vm;
 	}
-	
+
 	if (component && !jQuery.isEmptyObject(component.required)) {
-		$.each(construct.docs.required, function(key, paramObj) {
+		$.each(component.required, function(key, paramObj) {
 			paramObj.required = true;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
 		});
 	}
 	if (component && !jQuery.isEmptyObject(component.optional)) {
-		$.each(construct.docs.optional, function(key, paramObj) {
+		$.each(component.optional, function(key, paramObj) {
 			paramObj.required = false;
 			paramObj.name = key;
 			paramsTempArray.push(new paramVM(vm, paramObj));
@@ -160,6 +324,9 @@ var paramVM = function(parent, construct){
 	
 	vm.value = ko.observable();
 	vm.types = convertToArray(construct.type);
+	
+	//console.log(vm.types);
+
 	vm.typeFormatted = ko.computed(function(){
 		return vm.types.map(function(t) {
 			return ko.types.getFormatted(t, function(){
@@ -215,11 +382,10 @@ ko.components.register('knockout-component-preview', {
 				defaultValue: false,
 				type: ko.types.boolean
 			},
-			view: {
-				description: "Determines which view to show onload",
-				defaultValue: "dynamicEdit",
-				type: ko.types.string,
-				possibleValues: ["dynamicEdit", "table"]
+			jsdocs: {
+				description: "The path to the json file generated from jsdocs. If passed components will document themselves based on jsdocs data.",
+				defaultValue: undefined,
+				type: ko.types.string
 			},
 			autoDocument: {
 				description: "Attempts to infer paramaters, types, and defaultValues of viewmodel",
