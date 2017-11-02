@@ -1,31 +1,33 @@
-<div class="form-group" data-bind="visible: showSearch" style="margin:10px 10px 0 10px;">
+<div class="form-group" data-bind="visible: showSearch" style="margin: 10px;">
 	<input type="text" style="border-radius: 0;" class="form-control"
 		data-bind="attr: { placeholder: placeholderText }, textInput: searchInput">
 	<span class="input-group-btn"></span>
 </div>
 
-<ul class="list-unstyled components">
-	<!-- ko foreach: componentsCategory -->
-		<li>
-			<a data-bind="text: group, attr: { href: ('#' + group.replace(/\s+/g, '-')) }" data-toggle="collapse" aria-expanded="false" class="subMenu"></a>
-			<ul class="collapse list-unstyled" data-bind="foreach: subMenus, attr: { id: (group.replace(/\s+/g, '-')) }">
-				<li>
-					<a data-bind="
-						attr: { href: '#goto-' + name },
-						text: name,
-						click: function(){ click($component); },
-						visible: visible"></a>
-				</li>
-			</ul>
+<div class="component-list-overflow">
+	<ul class="list-unstyled">
+		<!-- ko foreach: componentsCategory -->
+			<li>
+				<a data-bind="text: group, attr: { href: ('#' + group.replace(/\s+/g, '-')) }" data-toggle="collapse" aria-expanded="false" class="subMenu"></a>
+				<ul class="collapse list-unstyled" data-bind="foreach: subMenus, attr: { id: (group.replace(/\s+/g, '-')) }">
+					<li>
+						<a data-bind="
+							attr: { href: '#goto-' + name },
+							text: name,
+							click: function(){ click($component); },
+							visible: visible"></a>
+					</li>
+				</ul>
+			</li>
+		<!-- /ko -->
+		<!-- ko foreach: componentsWOCategory -->
+		<li data-bind="css: { 'active': isActive }">
+			<a data-bind="
+				attr: { href: '#goto-' + name },
+				text: name,
+				click: function(){ click($component); },
+				visible: visible"></a>
 		</li>
-	<!-- /ko -->
-	<!-- ko foreach: componentsWOCategory -->
-	<li data-bind="css: { 'active': isActive }">
-		<a data-bind="
-			attr: { href: '#goto-' + name },
-			text: name,
-			click: function(){ click($component); },
-			visible: visible"></a>
-	</li>
-	<!-- /ko -->
-</ul>
+		<!-- /ko -->
+	</ul>
+</div>

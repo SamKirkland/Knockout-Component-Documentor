@@ -913,7 +913,7 @@ exports = module.exports = __webpack_require__(0)(undefined);
 
 
 // module
-exports.push([module.i, "", ""]);
+exports.push([module.i, "documentation-search {\n  display: flex;\n  flex-direction: column; }\n  documentation-search .component-list-overflow {\n    flex: 1;\n    overflow-y: auto; }\n    documentation-search .component-list-overflow::-webkit-scrollbar-track {\n      -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.75); }\n    documentation-search .component-list-overflow::-webkit-scrollbar {\n      width: 6px; }\n    documentation-search .component-list-overflow::-webkit-scrollbar-thumb {\n      background-color: rgba(0, 0, 0, 0.8); }\n", ""]);
 
 // exports
 
@@ -1017,7 +1017,7 @@ module.exports = function (css) {
 /* 7 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"form-group\" data-bind=\"visible: showSearch\" style=\"margin:10px 10px 0 10px;\">\r\n\t<input type=\"text\" style=\"border-radius: 0;\" class=\"form-control\"\r\n\t\tdata-bind=\"attr: { placeholder: placeholderText }, textInput: searchInput\">\r\n\t<span class=\"input-group-btn\"></span>\r\n</div>\r\n\r\n<ul class=\"list-unstyled components\">\r\n\t<!-- ko foreach: componentsCategory -->\r\n\t\t<li>\r\n\t\t\t<a data-bind=\"text: group, attr: { href: ('#' + group.replace(/\\s+/g, '-')) }\" data-toggle=\"collapse\" aria-expanded=\"false\" class=\"subMenu\"></a>\r\n\t\t\t<ul class=\"collapse list-unstyled\" data-bind=\"foreach: subMenus, attr: { id: (group.replace(/\\s+/g, '-')) }\">\r\n\t\t\t\t<li>\r\n\t\t\t\t\t<a data-bind=\"\r\n\t\t\t\t\t\tattr: { href: '#goto-' + name },\r\n\t\t\t\t\t\ttext: name,\r\n\t\t\t\t\t\tclick: function(){ click($component); },\r\n\t\t\t\t\t\tvisible: visible\"></a>\r\n\t\t\t\t</li>\r\n\t\t\t</ul>\r\n\t\t</li>\r\n\t<!-- /ko -->\r\n\t<!-- ko foreach: componentsWOCategory -->\r\n\t<li data-bind=\"css: { 'active': isActive }\">\r\n\t\t<a data-bind=\"\r\n\t\t\tattr: { href: '#goto-' + name },\r\n\t\t\ttext: name,\r\n\t\t\tclick: function(){ click($component); },\r\n\t\t\tvisible: visible\"></a>\r\n\t</li>\r\n\t<!-- /ko -->\r\n</ul>";
+module.exports = "<div class=\"form-group\" data-bind=\"visible: showSearch\" style=\"margin: 10px;\">\r\n\t<input type=\"text\" style=\"border-radius: 0;\" class=\"form-control\"\r\n\t\tdata-bind=\"attr: { placeholder: placeholderText }, textInput: searchInput\">\r\n\t<span class=\"input-group-btn\"></span>\r\n</div>\r\n\r\n<div class=\"component-list-overflow\">\r\n\t<ul class=\"list-unstyled\">\r\n\t\t<!-- ko foreach: componentsCategory -->\r\n\t\t\t<li>\r\n\t\t\t\t<a data-bind=\"text: group, attr: { href: ('#' + group.replace(/\\s+/g, '-')) }\" data-toggle=\"collapse\" aria-expanded=\"false\" class=\"subMenu\"></a>\r\n\t\t\t\t<ul class=\"collapse list-unstyled\" data-bind=\"foreach: subMenus, attr: { id: (group.replace(/\\s+/g, '-')) }\">\r\n\t\t\t\t\t<li>\r\n\t\t\t\t\t\t<a data-bind=\"\r\n\t\t\t\t\t\t\tattr: { href: '#goto-' + name },\r\n\t\t\t\t\t\t\ttext: name,\r\n\t\t\t\t\t\t\tclick: function(){ click($component); },\r\n\t\t\t\t\t\t\tvisible: visible\"></a>\r\n\t\t\t\t\t</li>\r\n\t\t\t\t</ul>\r\n\t\t\t</li>\r\n\t\t<!-- /ko -->\r\n\t\t<!-- ko foreach: componentsWOCategory -->\r\n\t\t<li data-bind=\"css: { 'active': isActive }\">\r\n\t\t\t<a data-bind=\"\r\n\t\t\t\tattr: { href: '#goto-' + name },\r\n\t\t\t\ttext: name,\r\n\t\t\t\tclick: function(){ click($component); },\r\n\t\t\t\tvisible: visible\"></a>\r\n\t\t</li>\r\n\t\t<!-- /ko -->\r\n\t</ul>\r\n</div>";
 
 /***/ }),
 /* 8 */
