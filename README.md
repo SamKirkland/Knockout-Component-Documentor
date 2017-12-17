@@ -8,17 +8,17 @@ Drop this component on a page and it will create a live preview and editor for e
 ## Installing
 Note: NPM package is in the roadmap
 
-1. Include the component js file `knockout-component-preview.js` and `clipboard.min.js` in your project
+1. Include the component js file `knockout-component-documentor.js` and `clipboard.min.js` in your project
 2. Add the CSS and JS on your page:
 ```html
-<link rel="stylesheet" type="text/css" href="knockout-component-preview.css" />
+<link rel="stylesheet" type="text/css" href="knockout-component-documentor.css" />
 <script src="clipboard.min.js"></script>
-<script src="knockout-component-preview.js"></script>
+<script src="knockout-component-documentor.js"></script>
 ```
 3. Include scripts to the components you want to document
 4. Add the component to your page:
 ```html
-<knockout-component-preview></knockout-component-preview>
+<knockout-component-documentor></knockout-component-documentor>
 ```
 
 ## Documenting Components

@@ -1,5 +1,5 @@
 {
-  "name": "knockout-component-preview",
+  "name": "knockout-component-documentor",
   "version": "1.0.0",
   "description": "A Knockout.js component to document your Knockout components.",
   "main": "index.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SamKirkland/Knockout-Component-Preview.git"
+    "url": "git+https://github.com/SamKirkland/Knockout-Component-Documentor.git"
   },
   "keywords": [
     "knockout",
@@ -24,9 +24,9 @@
   "author": "Sam Kirkland",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/SamKirkland/Knockout-Component-Preview/issues"
+    "url": "https://github.com/SamKirkland/Knockout-Component-Documentor/issues"
   },
-  "homepage": "https://github.com/SamKirkland/Knockout-Component-Preview#readme",
+  "homepage": "https://github.com/SamKirkland/Knockout-Component-Documentor#readme",
   "dependencies": {
     "jsdoc-to-markdown": "^3.0.0"
   },

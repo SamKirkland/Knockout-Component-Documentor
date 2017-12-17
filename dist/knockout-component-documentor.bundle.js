@@ -1643,7 +1643,7 @@ __webpack_require__(17);
 
 ko.components.register('random-sample-component', {
 	docs: {
-		description: "This is a sample component to show the usage of <knockout-component-preview> - you can test one of each editor.",
+		description: "This is a sample component to show the usage of <knockout-component-documentor> - you can test one of each editor.",
 		tags: ["demo", "example", "tag", "test"],
 		pages: ["/page1.html", "/page2.html", "/page3.html", "/page4.html", "/page5.html"],
 		required: {},
