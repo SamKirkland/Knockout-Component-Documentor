@@ -12,7 +12,7 @@
 							<span class="glyphicon glyphicon-eye-open"></span> Preview
 						</button>
 						<button type="button" class="btn btn-default" data-bind="css: { 'active': view() === 'Table' }, click: tableView">
-							<span class="glyphicon glyphicon-list-alt"></span> Table
+							<span class="glyphicon glyphicon-list-alt"></span> Parameters
 						</button>
 					</div>
 					
@@ -67,14 +67,14 @@
 									</td>
 									<td data-bind="text: description"></td>
 									<td data-bind="foreach: typeFormatted">
-										<div class="knockout-component-preview--dataType" data-bind="css: $parent.dataTypeClass($data)">
+										<div class="knockout-component-documentor--dataType" data-bind="css: $parent.dataTypeClass($data)">
 											<span data-bind="html: $data"></span>
 										</div>
 									</td>
 									<td data-bind="text: required"></td>
 									<td data-bind="text: defaultValue"></td>
 									<td data-bind="foreach: possibleValues">
-										<div class="knockout-component-preview--dataType">
+										<div class="knockout-component-documentor--dataType">
 											<span data-bind="text: paramAsText($data)"></span>
 										</div>
 									</td>

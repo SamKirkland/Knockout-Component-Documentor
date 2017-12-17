@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Knockout Component Preview Example</title>
+		<title>Knockout Component Documentor Example</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		
@@ -31,8 +31,8 @@
 		<!-- knockout -->
 		<script src="../js/knockout-3.4.1.js"></script>
 		
-		<!-- knockout-component-preview -->
-		<script src="../dist/knockout-component-preview.bundle.js"></script>
+		<!-- knockout-component-documentor -->
+		<script src="../dist/knockout-component-documentor.bundle.js"></script>
 		<link rel="stylesheet" href="exampleStyles.css">
 	</head>
 	<body>
@@ -55,7 +55,7 @@
 			<!-- Page Content Holder -->
 			<div id="content">
 				<section id="knockout-components" class="group">
-					<knockout-component-preview params="
+					<knockout-component-documentor params="
 						documentSelf: true,
 						componentName: selectedComponent,
 						jsdocs: { location: '../jsdocs.json', status: status },
@@ -64,7 +64,7 @@
 // Add to the top of the page you would like to use the component
 <script src='/yourCustomFolder/${componentName}.js'></script>`;
 						}
-					"></knockout-component-preview>
+					"></knockout-component-documentor>
 				</section>
 			</div>
 		</div>

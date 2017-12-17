@@ -193,7 +193,7 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 
 
 require("./knockout-documentation-search.js");
-require("./knockout-component-preview.js");
+require("./knockout-component-documentor.js");
 require("./random-sample-component.js");
 require("./jsdoc-sample-component.js");
 

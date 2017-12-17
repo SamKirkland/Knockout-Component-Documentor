@@ -17,6 +17,6 @@ module.exports = {
 	},
 	output: {
 		path: path.resolve(__dirname, 'dist'),
-		filename: 'knockout-component-preview.bundle.js'
+		filename: 'knockout-component-documentor.bundle.js'
 	}
 };

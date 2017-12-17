@@ -3,17 +3,6 @@ body {
 	background: #fafafa;
 }
 
-.knockout-component-preview--dataType {
-	background: rgba(0,0,0,.075);
-	border: 1px solid rgba(0,0,0,.15);
-	color: #333;
-	padding: 3px 6px;
-	border-radius: 2px;
-	display: inline-block;
-	float: left;
-	margin: 0 4px 4px 0;
-}
-
 .group {
 	background: #fff;
 	padding: 25px;

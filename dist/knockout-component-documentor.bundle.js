@@ -1021,18 +1021,621 @@ module.exports = "<div class=\"form-group\" data-bind=\"visible: showSearch\" st
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-throw new Error("Module build failed: Error: ENOENT: no such file or directory, open 'C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Preview\\js\\knockout-component-preview.js'");
+__webpack_require__(9);
+__webpack_require__(11);
+
+function getAllComponents() {
+	return ko.components.Cc;
+}
+
+function componentExists(componentName) {
+	return typeof getAllComponents()[ko.unwrap(componentName)] !== undefined;
+}
+
+function addOrError(item, errorArray, errorMessage) {
+	if (typeof item === "undefined") {
+		errorArray.push(errorMessage);
+		return undefined;
+	}
+	
+	return item;
+};
+
+function defaultValue(value, defaultValue) {
+	if (typeof value === "undefined") {
+		return defaultValue;
+	}
+	return value;
+}
+
+function jsDocTypeToComponentType(jsDocType) {
+	var regexp = /ko\.(\w+)\((.*)\)/i;
+
+	if (!regexp.test(jsDocType)) {
+		// not a knockout type type
+		return jsDocToBaseType(jsDocType);
+	}
+
+
+	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
+	var matches = regexp.exec(jsDocType);
+	var baseType = jsDocToBaseType(matches[2]);
+
+	switch (matches[1].toLowerCase()) {
+		case "observable":
+			return baseType.observable;
+
+		case "observablearray":
+			return baseType.observableArray;
+
+		case "computed":
+			return baseType.computed;
+
+		default:
+			return baseType;
+	}
+}
+
+function jsDocToBaseType(jsDocType) {
+	switch (jsDocType.toLowerCase()) {
+		case "object":
+			return ko.types.object;
+
+		case "date":
+			return ko.types.date;
+
+		case "datetime":
+			return ko.types.dateTime;
+
+		case "array":
+			return ko.types.array;
+
+		case "string":
+			return ko.types.string;
+
+		case "boolean":
+			return ko.types.boolean;
+
+		case "number":
+			return ko.types.number;
+
+		case "function":
+			return ko.types.function;
+
+		case "json":
+			return ko.types.json;
+
+		case "html":
+			return ko.types.html;
+
+		case "innerhtml":
+			return ko.types.innerHtml;
+
+		case "css":
+			return ko.types.css;
+
+		default:
+			return ko.types.other;
+	}
+}
+
+function jsDocsToComponentDocs(jsDocs) {
+	var allComponents = [];
+
+	// ToDo: Only run conversion on items that use @component
+	$.each(jsDocs, function(index, jsDoc) {
+		var componentDocs = {
+			description: jsDoc.description,
+			category: jsDoc.category,
+			required: {},
+			optional: {}
+		};
+
+		// move params to required and optional objects
+		$.each(jsDoc.params, function(paramIndex, param) {
+			var objToAddTo = componentDocs.required;
+			if (param.optional) {
+				objToAddTo = componentDocs.optional;
+			}
+
+			// remove "params" from the front of each param
+			var paramName = param.name;
+			var regexp = /\w+\.(.*)/i;
+			if (regexp.test(paramName)) {
+				paramName = regexp.exec(paramName)[1];
+			}
+
+
+			// ToDo: Add possibleValues
+			// ToDo: Support types in defaultValue
+			// ToDo: Add support for multiple types
+			objToAddTo[paramName] = {
+				description: param.description,
+				defaultValue: param.defaultvalue,
+				type: jsDocTypeToComponentType(param.type.names[0])
+			};
+		});
+
+		// move all the custom tags onto the componentDocs object
+		$.each(jsDoc.customTags, function(customTagsIndex, customTag) {
+			if (customTag.tag === "tags") {
+				// try to convert tags to array
+				componentDocs[customTag.tag] = JSON.parse(customTag.value);
+			}
+			else {
+				componentDocs[customTag.tag] = customTag.value;
+			}
+		});
+
+		allComponents.push(componentDocs);
+	});
+
+	return allComponents;
+}
+
+var componentDocumentorVM = function(params, componentInfo) {
+	var vm = this;
+	
+	var defaultIncludeFn = function(componentName) { return `<script src="/js/${componentName}.js"></script>`; };
+	var includeFn = params.includeFn || defaultIncludeFn;
+
+	vm.loadingComplete = ko.observable(false);
+
+	if (params.jsdocs !== undefined) {
+		if (location.protocol === 'file:') {
+			alert("jsdocs uses ajax to load in your doc file. This cannot be done on a local website. To fix this use localhost");
+		}
+		else {
+			// load the jsdoc json file
+			$.getJSON(params.jsdocs.location, function(jsDocs) {
+				var jsDocs = jsDocsToComponentDocs(jsDocs);
+
+				// add jsDocs to component registration
+				$.each(jsDocs, function(index, jsDoc) {
+					if (jsDoc.component !== undefined && componentExists(jsDoc.component)) {
+						var componentRegistration = getAllComponents()[jsDoc.component];
+
+						// merge jsDocs into docs
+						componentRegistration.docs = $.extend(true, componentRegistration.docs, jsDoc);
+					}
+				});
+
+				vm.loadingComplete(true);
+				params.jsdocs.status(true);
+			});
+		}
+	}
+
+	if (!componentExists(params.componentName)) {
+		// addOrError(paramsTempArray, vm.errors, `Component "${params.componentName}" can't be documented because its not registered on the page.`);
+		return;
+	}
+
+	vm.componentName = params.componentName;
+
+	// script tag generator
+	vm.htmlInclude = includeFn(ko.unwrap(vm.componentName));
+
+	// wait until jsDocs are loaded to get components
+	vm.loadingComplete.subscribe(function(){
+		vm.componentName.subscribe(function(newComponent){
+			vm.viewModel(
+				new componentDocumentationVM(vm, getAllComponents()[newComponent])
+			);
+		});
+
+		vm.viewModel = ko.observable();
+
+		if (vm.componentName() !== undefined) {
+			vm.viewModel(new componentDocumentationVM(vm, getAllComponents()[vm.componentName()]));
+		}
+	});
+
+	return vm;
+};
+
+var componentDocumentationVM = function(parent, construct) {
+	var vm = this;
+	var component = defaultValue(construct.docs, {});
+	
+	vm.errors = ko.observableArray();
+
+	vm.componentName = parent.componentName();
+	vm.htmlInclude = parent.htmlInclude;
+	vm.componentID = `goto-${vm.componentName}`;
+
+	vm.description = addOrError(
+		component.description,
+		vm.errors,
+		`<b>No description provided</b><br>
+		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Documentor#no-description-provided">example</a>.`
+	); // A description of the component
+	
+	vm.pages = defaultValue(component.pages, []); // A list of pages these components are used on
+	vm.tags = defaultValue(component.tags, []); // A list of tags
+	vm.params = ko.observableArray(); // A list of all params (required and optional)
+	vm.view = ko.observable(defaultValue(construct.view, "Preview")); // View can be Table or Preview, defaults to Table
+	vm.previewView = function() { vm.view("Preview"); };
+	vm.tableView = function() { vm.view("Table"); };
+
+	var blackListedComponents = ['knockout-component-documentor', 'documentation-search', 'knockout-type-editor'];
+	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
+
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	vm.componentParamObject = ko.computed(function(){
+		var paramObject = {};
+		vm.params().forEach(function(element, index){
+			if (element.value() !== element.defaultValue && element.types[0] !== ko.types.innerHtml) {
+				paramObject[element.name] = element.value();
+			}
+		});
+		return paramObject;
+	});
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	/* DELETE THE FOLLOWING ------------------------------ */
+	
+	vm.innerHtml = ko.observable();
+	vm.html = ko.computed(function(){
+		var paramsList = [];
+		vm.params().map(function(param){ // Build up params
+			if (param.value() !== param.defaultValue) { // Only add the param if it's not a default value
+				paramsList.push(`${param.name}: ${JSON.stringify(param.value())}`);
+			}
+		});
+		
+		var paramsText = paramsList.join(",\n\t"); // format params
+		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'></${vm.componentName}>`;
+		vm.innerHtml(computedHTML);
+		
+		// find code instance, and update it
+		// ToDo: fix this. make it less hacky
+		var $textBoxInstance = $(`#${vm.componentID} .CodeMirror`).last();
+		if ($textBoxInstance.length) {
+			$textBoxInstance[0].CodeMirror.setValue(computedHTML);
+		}
+		
+		return computedHTML;
+	});
+	
+	
+	// add the paramaters to the paramater list
+	var paramsTempArray = [];
+	
+	// if component they didn't add the documentation param end here
+	if (component === undefined) {
+		addOrError(paramsTempArray, vm.errors, `No documentation defined`);
+		return vm;
+	}
+
+	if (component && !jQuery.isEmptyObject(component.required)) {
+		$.each(component.required, function(key, paramObj) {
+			paramObj.required = true;
+			paramObj.name = key;
+			paramsTempArray.push(new paramVM(vm, paramObj));
+		});
+	}
+	if (component && !jQuery.isEmptyObject(component.optional)) {
+		$.each(component.optional, function(key, paramObj) {
+			paramObj.required = false;
+			paramObj.name = key;
+			paramsTempArray.push(new paramVM(vm, paramObj));
+		});
+	}
+	
+	addOrError(paramsTempArray, vm.errors, "No parameters defined");
+	vm.params(paramsTempArray); // Add required/optional params to the main list
+	
+	return vm;
+};
+
+var paramVM = function(parent, construct){
+	var vm = this;
+	
+	vm.name = construct.name || ""; // Name something something error
+	vm.required = construct.required;
+	vm.description = construct.description || ""; // No description error
+	vm.selectedValue = ko.observable();
+	vm.defaultValue = construct.defaultValue || ""; // No defaultValue error
+	
+	vm.possibleValues = construct.possibleValues || []; // all possible values (if set)
+	vm.example = construct.example || ""; // No example error
+	
+	vm.value = ko.observable();
+	vm.types = convertToArray(construct.type);
+	
+	//console.log(vm.types);
+
+	vm.typeFormatted = ko.computed(function(){
+		return vm.types.map(function(t) {
+			return ko.types.getFormatted(t, function(){
+				parent.errors.push(
+					`<b>The type '${t}' is not supported.</b><br>
+					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Documentor#SupportedTypes">supported type</a>.`
+				);
+			});
+		});
+	});
+
+	vm.dataTypeClass = function(data) {
+		var typeAsString = `[object ${data}]`;
+		switch (typeAsString) {
+			case ko.types.number.baseType:
+				return "colorized-number";
+				
+			case ko.types.string.baseType:
+				return "colorized-string";
+				
+			case ko.types.boolean.baseType:
+				return "colorized-boolean";
+				
+			case ko.types.array.baseType:
+				return "colorized-array";
+			
+			default:
+				return "colorized-default";
+		}
+	};
+	
+	function convertToArray(data) {
+		if (ko.types.get(data) === ko.types.array.baseType) {
+			return data;
+		}
+		
+		return [data];
+	};
+	
+	return vm;
+};
+
+
+ko.components.register('knockout-component-documentor', {
+	docs: {
+		description: "Documents Knockout.js components",
+		tags: ["internal for knockout-component-documentor"],
+		category: "Knockout Component Documentor",
+		required: {},
+		optional: {
+			documentSelf: {
+				description: "should <knockout-component-documentor> be included in the documentation output",
+				defaultValue: false,
+				type: ko.types.boolean
+			},
+			jsdocs: {
+				description: "The path to the json file generated from jsdocs. If passed components will document themselves based on jsdocs data.",
+				defaultValue: undefined,
+				type: ko.types.string
+			},
+			autoDocument: {
+				description: "Attempts to infer paramaters, types, and defaultValues of viewmodel",
+				defaultValue: false,
+				type: ko.types.boolean
+			},
+			includeFn: {
+				description: "A function used transform the component name into your include tags.",
+				defaultValue: function(componentName){ return `<script src="/js/${includeFn}.js"></script>`; },
+				type: ko.types.function
+			}
+		}
+	},
+	viewModel: {
+		createViewModel: function(params, componentInfo) {
+			return new componentDocumentorVM(params, componentInfo);
+		}
+	},
+	template: __webpack_require__(15)
+});
+
 
 /***/ }),
-/* 9 */,
-/* 10 */,
-/* 11 */,
-/* 12 */,
-/* 13 */,
-/* 14 */,
-/* 15 */,
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(10);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// Prepare cssTransformation
+var transform;
+
+var options = {}
+options.transform = transform
+// add the styles to the DOM
+var update = __webpack_require__(1)(content, options);
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/sass-loader/lib/loader.js!./knockout-component-documentor.scss", function() {
+			var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/sass-loader/lib/loader.js!./knockout-component-documentor.scss");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, ".params-list {\n  margin: 0; }\n\n.no-bottom-margin {\n  margin-bottom: 0; }\n\n.preview-max-height {\n  max-height: 90vh; }\n\n.knockout-component-documentor--dataType {\n  background: rgba(0, 0, 0, 0.075);\n  border: 1px solid rgba(0, 0, 0, 0.15);\n  color: #333;\n  padding: 3px 6px;\n  border-radius: 2px;\n  display: inline-block;\n  float: left;\n  margin: 0 4px 4px 0; }\n  .knockout-component-documentor--dataType.colorized-number {\n    background: #831a05;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-string {\n    background: #235712;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-boolean {\n    background: #0d7cca;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-array {\n    background: #661ec0;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-default {\n    background: #bbb;\n    color: #fff; }\n\n.param-name {\n  background: #ddd;\n  border-radius: 3px;\n  padding: 3px 6px; }\n\ntr:hover .param-name {\n  background: #ccc; }\n\n.styled-scrollbar {\n  background-color: rgba(0, 0, 0, 0.2);\n  -webkit-background-clip: text;\n  transition: background-color .5s;\n  overflow-x: hidden;\n  overflow-y: scroll; }\n\n.styled-scrollbar:hover {\n  background-color: rgba(0, 0, 0, 0.5); }\n\n.styled-scrollbar::-webkit-scrollbar {\n  width: 8px;\n  height: 8px; }\n\n.styled-scrollbar::-webkit-scrollbar-track {\n  display: none; }\n\n.styled-scrollbar::-webkit-scrollbar-thumb {\n  border-radius: 10px;\n  background-color: inherit; }\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(12);
+
+ko.components.register('knockout-type-editor', {
+	docs: {
+		description: "Edit javascript or knockout types",
+		tags: ["internal for knockout-component-documentor"],
+		category: "Knockout Component Documentor",
+		required: {
+			type: {
+				description: "A javascript or knockout type. The editor will edit that type",
+				type: ko.types.string
+			}
+		},
+		optional: {
+			optionalParam: {
+				description: "description!",
+				type: ko.types.string,
+				default: "default"
+			}
+		}
+	},
+	viewModel: function(params) {
+		var vm = this;
+
+		vm.value = params.value;
+		vm.types = params.types;
+		vm.typeEditing = ko.observable(ko.types.getType(vm.types[0])); // default to first item in list
+		
+		vm.textBinding = ko.observable();
+		vm.textBinding.subscribe(function(newValue){
+			if (newValue === undefined || newValue.length === 0) {
+				vm.value("undefined");
+				return;
+			}
+			if (ko.unwrap(vm.typeEditing) === ko.types.number.baseType) {
+				vm.value(parseInt(newValue));
+			}
+			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean.baseType) {
+				vm.value(JSON.parse(newValue));
+			}
+			else {
+				vm.value(ko.types.getType(newValue));
+			}
+		});
+		
+		vm.required = params.required;
+		vm.defaultValue = params.defaultValue;
+		vm.possibleValues = params.possibleValues || ko.observableArray();
+		
+		
+		vm.uid = idGen.getId();
+		
+		vm.checkIfDefault = function (data) {
+			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
+		};
+		
+		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
+			var found = ko.types.getType(type).match(/(?:\[\w+ )?(\w+)(?:\])?/i);
+			return found[1];
+			return type;
+		};
+
+		vm.colorizeData = function(data) {
+			var serialized = paramAsText(data);
+			
+			switch (ko.types.get(data)) {
+				case ko.types.number:
+					color = "#831a05";
+					break;
+					
+				case ko.types.string:
+					color = "#235712";
+					break;
+					
+				case ko.types.boolean:
+					color = "#0d7cca";
+					break;
+				
+				default:
+					color = "#bbb";
+			}
+			
+			var isDefault = "";
+			if (data === vm.defaultValue) {
+				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
+			}
+			
+			return `<span style='color:${color};'>${serialized}</span>${isDefault}`;
+		};
+		
+		return vm;
+	},
+	template: __webpack_require__(14)
+});
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(13);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// Prepare cssTransformation
+var transform;
+
+var options = {}
+options.transform = transform
+// add the styles to the DOM
+var update = __webpack_require__(1)(content, options);
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/sass-loader/lib/loader.js!./knockout-type-editor.scss", function() {
+			var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/sass-loader/lib/loader.js!./knockout-type-editor.scss");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "knockout-type-editor {\n  display: block; }\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports) {
+
+module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $parent.typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: possibleValues.length > 0 -->\r\n\t<select data-width=\"100%\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }\">\r\n\t\t<option data-bind=\"attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n<!-- ko if: possibleValues.length === 0 -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.date) -->\r\n\t\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.dateTime) -->\r\n\t\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.array) -->\r\n\t\tArray editor...\r\n\t\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.string) -->\r\n\t\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.boolean) -->\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t\t<div class=\"radio\">\r\n\t\t\t<label>\r\n\t\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t\t</label>\r\n\t\t</div>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->\r\n\t\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) ||\r\n\t\tko.types.compareType(typeEditing(), ko.types.json) ||\r\n\t\tko.types.compareType(typeEditing(), ko.types.function)\r\n\t-->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n\t<!-- /ko -->\r\n\t<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->\r\n\t\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n\t<!-- /ko -->\r\n<!-- /ko -->";
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+module.exports = "\r\n<!-- ko if: !loadingComplete() -->\r\n\t<h1>Loading...</h1>\r\n<!-- /ko -->\r\n<!-- ko if: loadingComplete -->\r\n\t<div class=\"subgroup container-fluid\" data-bind=\"with: viewModel\">\r\n\t\t<div data-bind=\"attr: { 'id': componentID }\">\r\n\t\t\t<div class=\"row\">\r\n\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t<div class=\"btn-group pull-right\" role=\"group\">\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Preview' }, click: previewView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-eye-open\"></span> Preview\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Table' }, click: tableView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-list-alt\"></span> Parameters\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<h4 style=\"margin-bottom:0;\" class=\"componentTitle\" data-bind=\"text: componentName\"></h4>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<div style=\"display:inline-block;margin:5px 0 10px 0;\" data-bind=\"foreach: tags\">\r\n\t\t\t\t\t\t<span class=\"label label-default\" data-bind=\"text: $data\"></span>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<blockquote data-bind=\"visible: description, text: description\"></blockquote>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko template: { nodes: $componentTemplateNodes, data: $data } --><!-- /ko -->\r\n\r\n\t\t\t\t\t<ul style=\"padding: 10px 30px;\" class=\"alert alert-danger\" data-bind=\"foreach: errors, visible: errors().length\">\r\n\t\t\t\t\t\t<li data-bind=\"html: $data\"></li>\r\n\t\t\t\t\t</ul>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko if: view() === 'Table' && pages.length -->\r\n\t\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tIncluded on <b data-bind=\"text: pages.length\"></b> pages\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div data-bind=\"foreach: pages\" class=\"list-group\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<a style=\"float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;\"\r\n\t\t\t\t\t\t\t\t\tclass=\"list-group-item\" data-bind=\"attr: { href: $data }, text: $data\"></a>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"row row-eq-height\" data-bind=\"css: { 'preview-max-height': view() === 'Preview' }\">\r\n\t\t\t\t<!-- ko if: view() === 'Table' -->\r\n\t\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t\t<h3 style=\"display:block;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\t<table class=\"table table-striped table-bordered table-hover\">\r\n\t\t\t\t\t\t\t<thead>\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<th>Name</th>\r\n\t\t\t\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t\t\t\t<th>Type(s)</th>\r\n\t\t\t\t\t\t\t\t\t<th>Required</th>\r\n\t\t\t\t\t\t\t\t\t<th>Default</th>\r\n\t\t\t\t\t\t\t\t\t<th>Possible Values</th>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</thead>\r\n\t\t\t\t\t\t\t<tbody data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<td>\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\" class=\"param-name\"></span>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: description\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"foreach: typeFormatted\">\r\n\t\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-documentor--dataType\" data-bind=\"css: $parent.dataTypeClass($data)\">\r\n\t\t\t\t\t\t\t\t\t\t\t<span data-bind=\"html: $data\"></span>\r\n\t\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: required\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: defaultValue\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"foreach: possibleValues\">\r\n\t\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-documentor--dataType\">\r\n\t\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: paramAsText($data)\"></span>\r\n\t\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</tbody>\r\n\t\t\t\t\t\t</table>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t\t<!-- ko if: view() === 'Preview' -->\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-4 no-gutter styled-scrollbar\">\r\n\t\t\t\t\t\t<div class=\"list-group params-list\" data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t<div class=\"list-group-item\">\r\n\t\t\t\t\t\t\t\t<div class=\"form-group\">\r\n\t\t\t\t\t\t\t\t\t<h3>\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\"></span>\r\n\t\t\t\t\t\t\t\t\t\t<span class=\"badge\" data-bind=\"text: typeFormatted\"></span>\r\n\t\t\t\t\t\t\t\t\t</h3>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t<p class=\"list-group-item-content\" data-bind=\"text: description\"></p>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t<knockout-type-editor params=\"\r\n\t\t\t\t\t\t\t\t\t\tvalue: value,\r\n\t\t\t\t\t\t\t\t\t\ttypes: types,\r\n\t\t\t\t\t\t\t\t\t\trequired: required,\r\n\t\t\t\t\t\t\t\t\t\tdefaultValue: defaultValue,\r\n\t\t\t\t\t\t\t\t\t\tpossibleValues: possibleValues\"></knockout-type-editor>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-8 no-gutter-right styled-scrollbar\" style=\"display:flex;flex-direction:column;\">\r\n\t\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 1 0\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">Preview</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"position: relative;\">\r\n\t\t\t\t\t\t\t\t<!-- ko if: !blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div data-bind='component: { name: componentName, params: componentParamObject }'></div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t\t<!-- ko if: blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div class=\"alert alert-danger\" style=\"margin:0;\">\r\n\t\t\t\t\t\t\t\t\t\tCan't preview <b data-bind=\"text: componentName\"></b> because it's a internal component\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tInclude Tags\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: htmlInclude\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default no-bottom-margin\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tComponent Code\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: html\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n<!-- /ko -->";
+
+/***/ }),
 /* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 

@@ -35,8 +35,8 @@ var link = function(name, docs){
 ko.components.register('documentation-search', {
 	docs: {
 		description: "Creates a list of links which will update selectedComponent when clicked",
-		tags: ["internal for knockout-component-preview"],
-		category: "Knockout Preview",
+		tags: ["internal for knockout-component-documentor"],
+		category: "Knockout Component Documentor",
 		required: {
 			selectedComponent: {
 				description: "This observable will be updated with the selected components name",
@@ -45,7 +45,7 @@ ko.components.register('documentation-search', {
 		},
 		optional: {
 			documentSelf: {
-				description: "should <knockout-component-preview> be included in the documentation output",
+				description: "should <knockout-component-documentor> be included in the documentation output",
 				defaultValue: false,
 				type: ko.types.boolean
 			},

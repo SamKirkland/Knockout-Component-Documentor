@@ -1,4 +1,4 @@
-require("./knockout-component-preview.scss");
+require("./knockout-component-documentor.scss");
 require("./knockout-type-editor.js");
 
 function getAllComponents() {
@@ -150,7 +150,7 @@ function jsDocsToComponentDocs(jsDocs) {
 	return allComponents;
 }
 
-var componentPreviewVM = function(params, componentInfo) {
+var componentDocumentorVM = function(params, componentInfo) {
 	var vm = this;
 	
 	var defaultIncludeFn = function(componentName) { return `<script src="/js/${componentName}.js"></script>`; };
@@ -225,17 +225,17 @@ var componentDocumentationVM = function(parent, construct) {
 		component.description,
 		vm.errors,
 		`<b>No description provided</b><br>
-		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Preview#no-description-provided">example</a>.`
+		To fix this error add a new key 'description' to the component, <a target="_blank" href="https://github.com/SamKirkland/Knockout-Component-Documentor#no-description-provided">example</a>.`
 	); // A description of the component
 	
 	vm.pages = defaultValue(component.pages, []); // A list of pages these components are used on
 	vm.tags = defaultValue(component.tags, []); // A list of tags
 	vm.params = ko.observableArray(); // A list of all params (required and optional)
-	vm.view = ko.observable(defaultValue(construct.view, "Table")); // View can be Table or Preview, defaults to Table
+	vm.view = ko.observable(defaultValue(construct.view, "Preview")); // View can be Table or Preview, defaults to Table
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
 
-	var blackListedComponents = ['knockout-component-preview', 'documentation-search', 'knockout-type-editor'];
+	var blackListedComponents = ['knockout-component-documentor', 'documentation-search', 'knockout-type-editor'];
 	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
 
 	/* DELETE THE FOLLOWING ------------------------------ */
@@ -332,7 +332,7 @@ var paramVM = function(parent, construct){
 			return ko.types.getFormatted(t, function(){
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
-					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Preview#SupportedTypes">supported type</a>.`
+					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Documentor#SupportedTypes">supported type</a>.`
 				);
 			});
 		});
@@ -370,15 +370,15 @@ var paramVM = function(parent, construct){
 };
 
 
-ko.components.register('knockout-component-preview', {
+ko.components.register('knockout-component-documentor', {
 	docs: {
 		description: "Documents Knockout.js components",
-		tags: ["internal for knockout-component-preview"],
-		category: "Knockout Preview",
+		tags: ["internal for knockout-component-documentor"],
+		category: "Knockout Component Documentor",
 		required: {},
 		optional: {
 			documentSelf: {
-				description: "should <knockout-component-preview> be included in the documentation output",
+				description: "should <knockout-component-documentor> be included in the documentation output",
 				defaultValue: false,
 				type: ko.types.boolean
 			},
@@ -401,8 +401,8 @@ ko.components.register('knockout-component-preview', {
 	},
 	viewModel: {
 		createViewModel: function(params, componentInfo) {
-			return new componentPreviewVM(params, componentInfo);
+			return new componentDocumentorVM(params, componentInfo);
 		}
 	},
-	template: require('./knockout-component-preview.html')
+	template: require('./knockout-component-documentor.html')
 });

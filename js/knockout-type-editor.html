@@ -42,7 +42,10 @@
 	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->
 		<input type="number" class="form-control" data-bind="textInput: textBinding" />
 	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) || ko.types.compareType(typeEditing(), ko.types.json) -->
+	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) ||
+		ko.types.compareType(typeEditing(), ko.types.json) ||
+		ko.types.compareType(typeEditing(), ko.types.function)
+	-->
 		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
 	<!-- /ko -->
 	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->

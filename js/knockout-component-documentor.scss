@@ -1,0 +1,82 @@
+.params-list {
+	margin: 0;
+}
+
+.no-bottom-margin {
+	margin-bottom: 0;
+}
+
+
+.preview-max-height {
+	max-height: 90vh;
+}
+
+
+.knockout-component-documentor--dataType {
+	background: rgba(0,0,0,.075);
+	border: 1px solid rgba(0,0,0,.15);
+	color: #333;
+	padding: 3px 6px;
+	border-radius: 2px;
+	display: inline-block;
+	float: left;
+	margin: 0 4px 4px 0;
+
+	&.colorized {
+		&-number {
+			background: #831a05;
+			color: #fff;
+		}
+
+		&-string {
+			background: #235712;
+			color: #fff;
+		}
+
+		&-boolean {
+			background: #0d7cca;
+			color: #fff;
+		}
+
+		&-array {
+			background: #661ec0;
+			color: #fff;
+		}
+
+		&-default {
+			background: #bbb;
+			color: #fff;
+		}
+	}
+}
+
+.param-name {
+	background: #ddd;
+	border-radius: 3px;
+	padding: 3px 6px;
+}
+tr:hover .param-name {
+	background: #ccc;
+}
+
+.styled-scrollbar {
+	background-color: rgba(0,0,0,.2);
+	-webkit-background-clip: text;
+	transition: background-color .5s;
+	overflow-x: hidden;
+	overflow-y: scroll;
+}
+.styled-scrollbar:hover {
+	background-color: rgba(0,0,0,0.5);  
+}
+.styled-scrollbar::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.styled-scrollbar::-webkit-scrollbar-track {
+	display: none;
+}
+.styled-scrollbar::-webkit-scrollbar-thumb {
+	border-radius: 10px;
+	background-color: inherit;
+}
