@@ -3,7 +3,7 @@
 ## Description
 A Knockout.js component that generates documentation for your Knockout components.
 
-Drop this component on a page and it will create a live preview and editor for every component you have registered on a page. The recommended use case for this is a internal only page/subdomain that where developers, QA, and shareholders can see all available UI component options and quickly protoype with the existing parameters.
+Drop this component on a page and it will create a live preview and editor for every component you have registered on the page. The recommended use case for this is a internal only page where developers, QA, and shareholders can see all available UI components.
 
 ## Installing
 Note: NPM package is in the roadmap
@@ -22,12 +22,15 @@ Note: NPM package is in the roadmap
 ```
 
 ## Documenting Components
-You have two options for documenting components. Automatically based on JSDocs and manually through setting the docs property when registering your component.
+You have two options for documenting components.
+1. jsDocs using the special `@component` property
+2. Using the `docs` property when registering a component
 
-### Automatically based on JSDocs
-Simply Run the command `"npm run document-components"` (it would be a good idea to add this to your build configuration)
-In order for jsDocs to work you must use the `@component` property and specify your component name
-Currently only a subset of properties that the manual configuration supports is supported in the jsDoc option
+### Method 1: jsDocs
+Note: Currently only some of the options available work using the jsDocs method
+
+Step 1:
+Document each component with normal jsDocs syntax. The only unique property knockout-component-documentor needs is the `@component` property. This should be specify the name of the component you're documenting.
 
 ```javascript
 /**
@@ -42,13 +45,23 @@ Currently only a subset of properties that the manual configuration supports is 
  */
 ```
 
-Once your components are documented using JSDocs pass the location of your jsdocs.json file (created using the npm command above)
-```javascript
-jsdocs: { location: '../jsdocs.json', status: status }
+Step 2:
+Run the command `"npm run document-components"`. This command will look through your solutions jsdocs and generate a `jsdocs.json` file with your documented components.
+
+Note: It would be a good idea to add this to your build configuration so it runs on every build.
+
+Step 3:
+Pass the generated file in step 2 into the `<knockout-component-documentor>` component.
+
+```html
+<knockout-component-documentor params="jsdocs: { location: '../jsdocs.json', status: status }"></knockout-component-documentor>
 ```
 
-### Manually
+Note: status is a ko.observable() boolean that is used to communicate with outside components when the documentor is done loading the jsdocs file. In the example page this is done for the side navigation.
+
+### Method 2: Using the `docs` property when registering a component 
 Add documentation when you register a component. Place your documentation within the docs property.
+
 ```javascript
 ko.components.register('my-documented-component', {
 	docs: {
@@ -80,7 +93,7 @@ ko.components.register('my-documented-component', {
 
 
 #### Properties
-Knockout Component Preivew supports many properties, if the following properties aren't sufficient see the custom properties section.
+Knockout Component Documentor supports many properties, if the following properties aren't sufficient see the custom properties section.
 
 | Property      		| Type          | Description                                           |
 |:---------------------:|:-------------:|:-----------------------------------------------------:|
@@ -90,6 +103,7 @@ Knockout Component Preivew supports many properties, if the following properties
 | category (optional)	| `string`      | Components with a category defined will appear within a submenu. Components with the same category (case sensitive) are grouped into the same submenu |
 | tags (optional)		| `string[]`    | Displayed under the title and searchable in the navigation |
 | pages (optional)		| `string[]`    | Displayed under the description, the strings should be valid links to the pages this component is used on. Useful for regression testing |
+
 
 #### Documenting Parameters
 Both the `required` and `optional` properties (see above) accept objects. Each object documents a parameter. See which keys you can use to describe your parameters below.
@@ -103,23 +117,34 @@ Both the `required` and `optional` properties (see above) accept objects. Each o
 
 
 ## Custom Properties
-Custom properties are passed through into the component.
-1. Simply add them to the `docs`
+Custom properties are used when the properties above just aren't enough for your use case.
+
+1. Is using method 1: 
+```javascript
+/**
+ * @component jsdoc-sample-component
+ * @description A component with a custom param!!!
+ * @myCustomParam You can have unlimited custom params
+ */
+```
+
+2. If using method 2: simply add a property directly onto the `docs` section
 ```javascript
 docs: {
-    description: "...",
-    required: {},
-    optional: {},
-    myCustomParam: "You can have unlimited custom params, you can also use any type (Object, string, array, etc...)"
+	description: "...",
+	required: {},
+	optional: {},
+	myCustomParam: "You can have unlimited custom params, you can also use any type (Object, string, array, etc...)"
 }
 ```
-2. Then specify how you want them to be displayed by passing in innerHTML into the component. You can also use any other params, you can even use internal variables knockout component preview sets.
+
+3. Then specify how you want them to be displayed by passing in innerHTML into the component.
 ```html
 <knockout-component-preview>
-    <!-- ko if: myCustomParam -->
-        This will only be displayed when a component sets the myCustomParam.<br>
-        myCustomParam value: <div data-bind="text: myCustomParam"></div>
-    <!-- /ko -->
+	<!-- ko if: myCustomParam -->
+		This will only be displayed when a component sets the myCustomParam.<br>
+		myCustomParam value: <div data-bind="text: myCustomParam"></div>
+	<!-- /ko -->
 </knockout-component-preview>
 ```
 
@@ -161,9 +186,9 @@ All settings are optional. Pass the params into the component.
 ##### Example:
 ```html
 <knockout-component-preview params="
-    includeFn: function(componentName){
-        return `<script src='/yourCustomFolder/${componentName}.js'></script>`;
-    }
+	includeFn: function(componentName){
+		return `<script src='/yourCustomFolder/${componentName}.js'></script>`;
+	}
 ">
 </knockout-component-preview>
 ```
@@ -187,5 +212,6 @@ If you don't want the component to be displayed in your documentation use the bl
 
 
 ## License
-Copyright 2015 Sam Kirkland
+Copyright Sam Kirkland
+
 Released under The MIT License.
