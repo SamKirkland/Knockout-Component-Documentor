@@ -204,11 +204,10 @@ If you don't want the component to be displayed in your documentation use the bl
 ## Roadmap
 1. autoDocument option
 2. whiteList and blackList options
-3. Support for live innerHTML in the preview
-4. Support for defining examples
-5. NPM package
-6. React version
-7. Angular version
+3. Support for defining examples
+4. NPM package
+5. React version
+6. Angular version
 
 
 ## License

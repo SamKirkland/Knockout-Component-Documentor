@@ -162,6 +162,42 @@ ko.bindingHandlers.clipboard = {
 	}
 };
 
+ko.bindingHandlers.innerHtml = {
+	update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+		var value = valueAccessor();
+		var valueUnwrapped = ko.unwrap(value);
+
+		if (valueUnwrapped === null) {
+			return;
+		}
+
+		// save height so it's less garring
+		$(element).parent().height($(element).parent().height());
+
+		viewModel.innerHtmlLoading(true);
+
+		// unbind
+		ko.cleanNode($(element).children().first()[0]);
+		
+		// re-add
+		$(element).html(`<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`);
+		// apply the binding again
+		setTimeout(function(){
+			try {
+				ko.applyBindings(viewModel, $(element).children().first()[0]);
+			}
+			catch (e) {
+				viewModel.innerHtmlLoading(false);
+			}
+
+			// reset height to auto
+			$(element).parent().height("auto");
+
+			viewModel.innerHtmlLoading(false);
+		}, 100);
+	}
+};
+
 window.codeEditorFunction = function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 	var bindingParams = ko.utils.unwrapObservable(valueAccessor());
 	

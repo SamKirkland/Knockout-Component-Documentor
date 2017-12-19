@@ -110,8 +110,11 @@
 						<div class="panel panel-default" style="flex: 1 0">
 							<div class="panel-heading">Preview</div>
 							<div class="panel-body" style="position: relative;">
+								<div data-bind="visible: innerHtmlLoading" class="innerHtmlLoading"></div>
 								<!-- ko if: !blackListedComponent -->
-									<div data-bind='component: { name: componentName, params: componentParamObject }'></div>
+									<div data-bind="innerHtml: htmlParam">
+										<div data-bind="component: { name: componentName, params: componentParamObject }"></div>
+									</div>
 								<!-- /ko -->
 								<!-- ko if: blackListedComponent -->
 									<div class="alert alert-danger" style="margin:0;">

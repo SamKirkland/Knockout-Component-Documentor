@@ -255,7 +255,7 @@ var componentDocumentationVM = function(parent, construct) {
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
-	
+
 	vm.innerHtml = ko.observable();
 	vm.html = ko.computed(function(){
 		var paramsList = [];
@@ -307,6 +307,29 @@ var componentDocumentationVM = function(parent, construct) {
 	addOrError(paramsTempArray, vm.errors, "No parameters defined");
 	vm.params(paramsTempArray); // Add required/optional params to the main list
 	
+
+	// All innerHtml params
+	var allInnerHtmlParams = vm.params().filter(function(element) {
+		return element.typeFormatted()[0] === "InnerHTML";
+	});
+
+	if (allInnerHtmlParams.length > 0) {
+		vm.htmlParam = allInnerHtmlParams[0];
+	}
+	else {
+		vm.htmlParam = null;
+	}
+
+	if (allInnerHtmlParams.length > 1) {
+		vm.errors.push(
+			`This component has multiple parameters of type 'InnerHTML'<br>
+			To fix this error change the types of all but one parameter to something else.<br>
+			Offending parameters: <b>${allInnerHtmlParams.map(function(x) { return x.name; }).join(", ")}</b>`
+		);
+	}
+
+	vm.innerHtmlLoading = ko.observable(false);
+
 	return vm;
 };
 
