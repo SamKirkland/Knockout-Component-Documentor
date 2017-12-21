@@ -1320,14 +1320,25 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.innerHtml = ko.observable();
 	vm.html = ko.computed(function(){
 		var paramsList = [];
-		vm.params().map(function(param){ // Build up params
+		vm.params().filter(function(x){
+			// Ignore htmlParam types
+			// ToDo: This needs to be fixed
+			return x.types[0].baseType !== "[object InnerHTML]";
+		}).map(function(param){ // Build up params
 			if (param.value() !== param.defaultValue) { // Only add the param if it's not a default value
 				paramsList.push(`${param.name}: ${JSON.stringify(param.value())}`);
 			}
 		});
-		
+
 		var paramsText = paramsList.join(",\n\t"); // format params
-		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'></${vm.componentName}>`;
+		let htmlParam = "";
+		if (vm.htmlParam !== undefined &&
+			vm.htmlParam.value() !== undefined &&
+			vm.htmlParam.value() !== "undefined") {
+			
+			htmlParam = `\n${vm.htmlParam.value()}\n`;
+		}
+		var computedHTML = `<${vm.componentName} params='\n\t${paramsText}\n'>${htmlParam}</${vm.componentName}>`;
 		vm.innerHtml(computedHTML);
 		
 		// find code instance, and update it
