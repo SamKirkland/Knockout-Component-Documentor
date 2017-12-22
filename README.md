@@ -8,15 +8,12 @@ Drop this component on a page and it will create a live preview and editor for e
 ## Installing
 Note: NPM package is in the roadmap
 
-1. Include the component js file `knockout-component-documentor.js` and `clipboard.min.js` in your project
-2. Add the CSS and JS on your page:
+1. Add the component js file in your page:
 ```html
-<link rel="stylesheet" type="text/css" href="knockout-component-documentor.css" />
-<script src="clipboard.min.js"></script>
-<script src="knockout-component-documentor.js"></script>
+<script src="knockout-component-documentor.bundle.js"></script>
 ```
-3. Include scripts to the components you want to document
-4. Add the component to your page:
+2. Include scripts to the components you want to document
+3. Add the knockout-component-documentor to your page:
 ```html
 <knockout-component-documentor></knockout-component-documentor>
 ```
@@ -200,14 +197,12 @@ The description is a required parameter when documenting a component. To fix thi
 If you don't want the component to be displayed in your documentation use the blacklist setting.
 
 
-
 ## Roadmap
 1. autoDocument option
 2. whiteList and blackList options
 3. Support for defining examples
 4. NPM package
 5. React version
-6. Angular version
 
 
 ## License

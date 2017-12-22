@@ -2,7 +2,7 @@ require("./knockout-component-documentor.scss");
 require("./knockout-type-editor.js");
 
 function getAllComponents() {
-	return ko.components.Cc;
+	return ko.components.Ec;
 }
 
 function componentExists(componentName) {
@@ -271,7 +271,7 @@ var componentDocumentationVM = function(parent, construct) {
 
 		var paramsText = paramsList.join(",\n\t"); // format params
 		let htmlParam = "";
-		if (vm.htmlParam !== undefined &&
+		if (vm.htmlParam !== undefined && vm.htmlParam !== null &&
 			vm.htmlParam.value() !== undefined &&
 			vm.htmlParam.value() !== "undefined") {
 			

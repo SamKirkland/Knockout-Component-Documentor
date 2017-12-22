@@ -12,21 +12,9 @@ body {
 }
 
 
-
-/* Bootstrap style */
-.table-striped>tbody>tr:nth-of-type(odd){
-	background-color: #f1f1f1;
-}
-.table-hover>tbody>tr:hover {
-	background-color: #e8e8e8;
-}
-
-
-
 .CodeMirror {
 	height: auto;
 }
-
 
 
 /* Equal height */

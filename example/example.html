@@ -12,28 +12,22 @@
 		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		
-		<link rel="stylesheet" href="codemirror.css">
-		<link rel="stylesheet" href="base16-dark.css">
-		<link rel="stylesheet" href="mdn-like.css">
-		<script src="codemirror.js"></script>
-		<script src="css.js"></script>
-		<script src="xml.js"></script>
-		<script src="javascript.js"></script>
-		<script src="htmlmixed.js"></script>
-		<script src="clipboard.min.js"></script>
-		
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
-		
-		<!-- Latest compiled and minified JavaScript -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
-		
 		<!-- knockout -->
-		<script src="../js/knockout-3.4.1.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
 		
 		<!-- knockout-component-documentor -->
 		<script src="../dist/knockout-component-documentor.bundle.js"></script>
 		<link rel="stylesheet" href="exampleStyles.css">
+		<script>
+			$(document).ready(function(){
+				var pageVM = {
+					selectedComponent: ko.observable(),
+					status: ko.observable(false)
+				};
+
+				ko.applyBindings(pageVM);
+			});
+		</script>
 	</head>
 	<body>
 		<div class="wrapper">

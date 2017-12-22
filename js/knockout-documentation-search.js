@@ -1,7 +1,7 @@
 require("./knockout-documentation-search.scss");
 
 function getAllComponents() {
-	return ko.components.Cc;
+	return ko.components.Ec;
 }
 
 var link = function(name, docs){

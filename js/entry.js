@@ -1,3 +1,12 @@
+import CodeMirror from "codemirror/lib/codemirror.js";
+import "codemirror/lib/codemirror.css";
+import "codemirror/theme/mdn-like.css";
+
+import Clipboard from "clipboard";
+
+import js from 'codemirror/mode/javascript/javascript.js';
+import xml from 'codemirror/mode/xml/xml.js';
+import htmlmixed from 'codemirror/mode/htmlmixed/htmlmixed.js';
 
 function knockoutType(baseType) {
 	this.baseType = baseType;
@@ -144,10 +153,7 @@ ko.bindingHandlers.clipboard = {
 	init: function(el, valueAccessor, allBindings, data, context) {
 		new Clipboard(el, {
 			text: function(trigger) {
-				if (typeof valueAccessor === "function") { // ko.unwrap wont work here
-					return valueAccessor();
-				}
-				return valueAccessor;
+				return ko.unwrap(valueAccessor());
 			}
 		}).on('success', function(e) {
 			$(e.trigger).addClass("btn-success").find("span")
@@ -232,13 +238,3 @@ require("./knockout-documentation-search.js");
 require("./knockout-component-documentor.js");
 require("./random-sample-component.js");
 require("./jsdoc-sample-component.js");
-
-
-$(document).ready(function(){
-	var pageVM = {
-		selectedComponent: ko.observable(),
-		status: ko.observable(false)
-	};
-
-	ko.applyBindings(pageVM);
-});
