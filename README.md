@@ -5,6 +5,8 @@ A Knockout.js component that generates documentation for your Knockout component
 
 Drop this component on a page and it will create a live preview and editor for every component you have registered on the page. The recommended use case for this is a internal only page where developers, QA, and shareholders can see all available UI components.
 
+### [Check out the DEMO!](https://samkirkland.com/labs/Knockout-Component-Documentor/example/example.html)
+
 ## Installing
 Note: NPM package is in the roadmap
 
