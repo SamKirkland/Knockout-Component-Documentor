@@ -1,8 +1,8 @@
 [
   {
-    "id": "jsDocSampleComponentVM",
-    "longname": "jsDocSampleComponentVM",
-    "name": "jsDocSampleComponentVM",
+    "id": "viewModel",
+    "longname": "viewModel",
+    "name": "viewModel",
     "kind": "function",
     "scope": "global",
     "description": "A quite wonderful component.",
@@ -58,10 +58,330 @@
       }
     ],
     "meta": {
-      "lineno": 14,
+      "lineno": 26,
       "filename": "jsdoc-sample-component.js",
-      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Preview\\js"
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 0
+  },
+  {
+    "id": "viewModel",
+    "longname": "viewModel",
+    "name": "viewModel",
+    "kind": "function",
+    "scope": "global",
+    "description": "Creates a list of links which will update selectedComponent when clicked",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "description": "This observable will be updated with the selected components name",
+        "name": "params.selectedComponent"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": false,
+        "description": "Determines if <knockout-component-documentor> will be included in the documentation output",
+        "name": "params.documentSelf"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": true,
+        "description": "To display the search above the navigation",
+        "name": "params.showSearch"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "Search for...",
+        "description": "The default text to display in the search box",
+        "name": "params.placeholderText"
+      }
+    ],
+    "category": "Knockout Component Documentor",
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "documentation-search"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"internal for knockout-component-documentor\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 45,
+      "filename": "knockout-documentation-search.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 2
+  },
+  {
+    "id": "viewModel",
+    "longname": "viewModel",
+    "name": "viewModel",
+    "kind": "function",
+    "scope": "global",
+    "description": "Edit javascript or knockout types",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "description": "A javascript or knockout type. The editor will edit that typ",
+        "name": "params.type"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "default",
+        "description": "description!",
+        "name": "params.optionalParam"
+      }
+    ],
+    "category": "Knockout Component Documentor",
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "knockout-type-editor"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"internal for knockout-component-documentor\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 12,
+      "filename": "knockout-type-editor.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 3
+  },
+  {
+    "id": "viewModel",
+    "longname": "viewModel",
+    "name": "viewModel",
+    "kind": "function",
+    "scope": "global",
+    "description": "This is a sample component to show the usage of <knockout-component-documentor> - you can test one of each editor.",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "string",
+            "boolean",
+            "json"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "Default title",
+        "description": "The title of the component",
+        "name": "params.title"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "default description",
+        "description": "A description under the title",
+        "name": "params.description"
+      },
+      {
+        "type": {
+          "names": [
+            "ko.observable(string)"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "observable string",
+        "description": "A knockout observable string, changing this param will auto unbind and rebind the component",
+        "name": "params.observable"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "glyphicon-user",
+        "description": "The icon to show below the title",
+        "name": "params.icon"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": true,
+        "description": "Doesn't do anything...",
+        "name": "params.uselessParam"
+      },
+      {
+        "type": {
+          "names": [
+            "number"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": 1,
+        "description": "The border size in pixels of the border",
+        "name": "params.borderWidth"
+      },
+      {
+        "type": {
+          "names": [
+            "json"
+          ]
+        },
+        "optional": true,
+        "description": "JSON editor",
+        "name": "params.jsonParam"
+      },
+      {
+        "type": {
+          "names": [
+            "ko.observableArray()"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "something",
+        "description": "knockout observableArray",
+        "name": "params.koObservableArray"
+      },
+      {
+        "type": {
+          "names": [
+            "array"
+          ]
+        },
+        "description": "js array",
+        "name": "params.jsArray"
+      },
+      {
+        "type": {
+          "names": [
+            "innerHtml"
+          ]
+        },
+        "description": "Passes through the HTML",
+        "name": "params.innerHtml"
+      }
+    ],
+    "category": "Knockout Component Documentor",
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "random-sample-component"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"demo\", \"example\", \"tag\", \"test\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 20,
+      "filename": "random-sample-component.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 4
+  },
+  {
+    "id": "viewModel.createViewModel",
+    "longname": "viewModel.createViewModel",
+    "name": "createViewModel",
+    "kind": "function",
+    "scope": "static",
+    "description": "Documents Knockout.js components",
+    "memberof": "viewModel",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "description": "The path to the json file generated from jsdocs. If passed components will document themselves based on jsdocs data.",
+        "name": "params.jsdocs"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": false,
+        "description": "should <knockout-component-documentor> be included in the documentation output",
+        "name": "params.documentSelf"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": false,
+        "description": "Attempts to infer paramaters, types, and defaultValues of viewmodel",
+        "name": "params.autoDocument"
+      },
+      {
+        "type": {
+          "names": [
+            "function"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "function(componentName){ return `<script src=\"/js/${includeFn}.js\"></script>`; }",
+        "description": "A function used transform the component name into your include tags.",
+        "name": "params.includeFn"
+      }
+    ],
+    "category": "Knockout Component Documentor",
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "knockout-component-documentor"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"internal for knockout-component-documentor\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 416,
+      "filename": "knockout-component-documentor.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 1
   }
 ]

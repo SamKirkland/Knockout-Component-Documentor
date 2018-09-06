@@ -5,50 +5,41 @@
 	</select>
 <!-- /ko -->
 
-<!-- ko if: possibleValues.length > 0 -->
-	<select data-width="100%" data-show-subtext="true"
-		data-bind="foreach: possibleValues, value: textBinding, attr: { multiple: typeEditing === ko.types.array }">
-		<option data-bind="attr: { 'data-content': $parent.colorizeData($data) }, text: $data, 'value': $data"></option>
-	</select>
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.date) -->
+	<input type="date" class="form-control" data-bind="textInput: textBinding" />
 <!-- /ko -->
-<!-- ko if: possibleValues.length === 0 -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.date) -->
-		<input type="date" class="form-control" data-bind="textInput: textBinding" />
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.dateTime) -->
-		<input type="datetime-local" class="form-control" data-bind="textInput: textBinding" />
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.array) -->
-		Array editor...
-		<textarea class="html" data-bind="textInput: textBinding, text: '[true,false,true,123]', uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.string) -->
-		<input type="text" class="form-control" data-bind="textInput: textBinding, value: defaultValue" />
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.boolean) -->
-		<div class="radio">
-			<label>
-				<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
-				<span data-bind="visible: defaultValue">*default</span>
-			</label>
-		</div>
-		<div class="radio">
-			<label>
-				<input data-bind="attr: { name: uid }, checked: value, checkedValue: false" type="radio" value="false" /> false
-				<span data-bind="visible: !defaultValue">*default</span>
-			</label>
-		</div>
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->
-		<input type="number" class="form-control" data-bind="textInput: textBinding" />
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) ||
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.dateTime) -->
+	<input type="datetime-local" class="form-control" data-bind="textInput: textBinding" />
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.array) -->
+	<textarea class="html" data-bind="textInput: textBinding, text: [true,false,true,123], uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.string) -->
+	<input type="text" class="form-control" data-bind="textInput: textBinding, value: defaultValue" />
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.boolean) -->
+	<div class="radio">
+		<label>
+			<input data-bind="attr: { name: uid }, checked: value, checkedValue: true" type="radio" value="true" /> true
+			<span data-bind="visible: defaultValue">*default</span>
+		</label>
+	</div>
+	<div class="radio">
+		<label>
+			<input data-bind="attr: { name: uid }, checked: value, checkedValue: false" type="radio" value="false" /> false
+			<span data-bind="visible: !defaultValue">*default</span>
+		</label>
+	</div>
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->
+	<input type="number" class="form-control" data-bind="textInput: textBinding" />
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) ||
 		ko.types.compareType(typeEditing(), ko.types.json) ||
 		ko.types.compareType(typeEditing(), ko.types.function)
 	-->
-		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
-	<!-- /ko -->
-	<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->
-		<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
-	<!-- /ko -->
+	<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }"></textarea>
+<!-- /ko -->
+<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->
+	<textarea class="html" data-bind="uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }"></textarea>
 <!-- /ko -->

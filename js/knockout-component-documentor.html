@@ -56,7 +56,6 @@
 									<th>Type(s)</th>
 									<th>Required</th>
 									<th>Default</th>
-									<th>Possible Values</th>
 								</tr>
 							</thead>
 							<tbody data-bind="foreach: params">
@@ -72,11 +71,6 @@
 									</td>
 									<td data-bind="text: required"></td>
 									<td data-bind="text: defaultValue"></td>
-									<td data-bind="foreach: possibleValues">
-										<div class="knockout-component-documentor--dataType">
-											<span data-bind="text: paramAsText($data)"></span>
-										</div>
-									</td>
 								</tr>
 							</tbody>
 						</table>
@@ -98,8 +92,7 @@
 										value: value,
 										types: types,
 										required: required,
-										defaultValue: defaultValue,
-										possibleValues: possibleValues"></knockout-type-editor>
+										defaultValue: defaultValue"></knockout-type-editor>
 									
 								</div>
 							</div>

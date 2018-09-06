@@ -1,24 +1,14 @@
 require("./knockout-type-editor.scss");
 
 ko.components.register('knockout-type-editor', {
-	docs: {
-		description: "Edit javascript or knockout types",
-		tags: ["internal for knockout-component-documentor"],
-		category: "Knockout Component Documentor",
-		required: {
-			type: {
-				description: "A javascript or knockout type. The editor will edit that type",
-				type: ko.types.string
-			}
-		},
-		optional: {
-			optionalParam: {
-				description: "description!",
-				type: ko.types.string,
-				default: "default"
-			}
-		}
-	},
+	/**
+	 * @component knockout-type-editor
+	 * @tags ["internal for knockout-component-documentor"]
+	 * @description Edit javascript or knockout types
+	 * @category Knockout Component Documentor
+	 * @param {string} params.type A javascript or knockout type. The editor will edit that typ
+	 * @param {string} [params.optionalParam=default] description!
+	 */
 	viewModel: function(params) {
 		var vm = this;
 
@@ -45,7 +35,6 @@ ko.components.register('knockout-type-editor', {
 		
 		vm.required = params.required;
 		vm.defaultValue = params.defaultValue;
-		vm.possibleValues = params.possibleValues || ko.observableArray();
 		
 		
 		vm.uid = idGen.getId();

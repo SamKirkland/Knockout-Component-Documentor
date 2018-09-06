@@ -31,36 +31,17 @@ var link = function(name, docs){
 };
 
 
-// Automatically builds out the documentation navigation
 ko.components.register('documentation-search', {
-	docs: {
-		description: "Creates a list of links which will update selectedComponent when clicked",
-		tags: ["internal for knockout-component-documentor"],
-		category: "Knockout Component Documentor",
-		required: {
-			selectedComponent: {
-				description: "This observable will be updated with the selected components name",
-				type: ko.types.string
-			}
-		},
-		optional: {
-			documentSelf: {
-				description: "should <knockout-component-documentor> be included in the documentation output",
-				defaultValue: false,
-				type: ko.types.boolean
-			},
-			showSearch: {
-				description: "To display the search above the navigation",
-				defaultValue: true,
-				type: ko.types.boolean
-			},
-			placeholderText: {
-				description: "The default text to display in the search box",
-				defaultValue: "Search for...",
-				type: ko.types.string
-			}
-		}
-	},
+	/**
+	 * @component documentation-search
+	 * @tags ["internal for knockout-component-documentor"]
+	 * @description Creates a list of links which will update selectedComponent when clicked
+	 * @category Knockout Component Documentor
+	 * @param {string} params.selectedComponent This observable will be updated with the selected components name
+	 * @param {boolean} [params.documentSelf=false] Determines if <knockout-component-documentor> will be included in the documentation output
+	 * @param {boolean} [params.showSearch=true] To display the search above the navigation
+	 * @param {string} [params.placeholderText=Search for...] The default text to display in the search box
+	 */
 	viewModel: function(params) {
 		var self = this;
 		
