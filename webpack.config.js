@@ -1,4 +1,5 @@
 const path = require('path');
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
 	entry: './js/entry.js',
@@ -19,6 +20,11 @@ module.exports = {
 			}
 		]
 	},
+	plugins: [
+		new WebpackShellPlugin({
+			onBuildEnd: ['npm run document-components']
+		})
+	],
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'knockout-component-documentor.bundle.js'
