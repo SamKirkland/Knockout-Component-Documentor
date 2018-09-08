@@ -33,7 +33,6 @@ function jsDocTypeToComponentType(jsDocType) {
 		return jsDocToBaseType(jsDocType);
 	}
 
-
 	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
 	var matches = regexp.exec(jsDocType);
 	var baseType = jsDocToBaseType(matches[2]);
@@ -99,22 +98,19 @@ function jsDocToBaseType(jsDocType) {
 function jsDocsToComponentDocs(jsDocs) {
 	var allComponents = [];
 
-	// ToDo: Only run conversion on items that use @component
+	// ToDo: Only export jsdocs on items that use @component
 	$.each(jsDocs, function(index, jsDoc) {
 		var componentDocs = {
 			description: jsDoc.description,
 			category: jsDoc.category,
-			required: {},
-			optional: {}
+			// ToDo: combine required and optional
+			params: [],
+			filename: jsDoc.meta.filename,
+			filepath: jsDoc.meta.path
 		};
 
-		// move params to required and optional objects
+		// ToDo: convert to .map
 		$.each(jsDoc.params, function(paramIndex, param) {
-			var objToAddTo = componentDocs.required;
-			if (param.optional) {
-				objToAddTo = componentDocs.optional;
-			}
-
 			// remove "params" from the front of each param
 			var paramName = param.name;
 			var regexp = /\w+\.(.*)/i;
@@ -122,13 +118,13 @@ function jsDocsToComponentDocs(jsDocs) {
 				paramName = regexp.exec(paramName)[1];
 			}
 
-			// ToDo: Support types in defaultValue
-			// ToDo: Add support for multiple types
-			objToAddTo[paramName] = {
+			componentDocs.params.push({
+				name: paramName,
+				required: !param.optional,
 				description: param.description,
 				defaultValue: param.defaultvalue,
 				type: jsDocTypeToComponentType(param.type.names[0])
-			};
+			});
 		});
 
 		// move all the custom tags onto the componentDocs object
@@ -151,7 +147,7 @@ function jsDocsToComponentDocs(jsDocs) {
 var componentDocumentorVM = function(params, componentInfo) {
 	var vm = this;
 	
-	var defaultIncludeFn = function(componentName) { return `<script src="/js/${componentName}.js"></script>`; };
+	var defaultIncludeFn = function(componentName, filename, filepath) { return `<script src="/js/${componentName}.js"></script>`; };
 	var includeFn = params.includeFn || defaultIncludeFn;
 
 	vm.loadingComplete = ko.observable(false);
@@ -191,14 +187,17 @@ var componentDocumentorVM = function(params, componentInfo) {
 	vm.componentName = params.componentName;
 
 	// script tag generator
-	vm.htmlInclude = includeFn(ko.unwrap(vm.componentName));
+	vm.htmlInclude = ko.observable();
 
 	// wait until jsDocs are loaded to get components
-	vm.loadingComplete.subscribe(function(){
-		vm.componentName.subscribe(function(newComponent){
+	vm.loadingComplete.subscribe(() => {
+		vm.componentName.subscribe((newComponent) => {
+			let component = getAllComponents()[newComponent];
 			vm.viewModel(
-				new componentDocumentationVM(vm, getAllComponents()[newComponent])
+				new componentDocumentationVM(vm, component)
 			);
+
+			vm.htmlInclude(includeFn(vm.componentName(), component.docs.filename, component.docs.filepath));
 		});
 
 		vm.viewModel = ko.observable();
@@ -257,7 +256,7 @@ var componentDocumentationVM = function(parent, construct) {
 	/* DELETE THE FOLLOWING ------------------------------ */
 
 	vm.innerHtml = ko.observable();
-	vm.html = ko.computed(function(){
+	vm.html = ko.computed(() => {
 		var paramsList =
 			vm.params()
 			.filter((param) => {
@@ -296,30 +295,14 @@ var componentDocumentationVM = function(parent, construct) {
 		return computedHTML;
 	});
 	
-	
-	// add the paramaters to the paramater list
-	var paramsTempArray = [];
-	
 	// if component they didn't add the documentation param end here
 	if (component === undefined) {
 		addOrError(paramsTempArray, vm.errors, `No documentation defined`);
 		return vm;
 	}
 
-	if (component && !jQuery.isEmptyObject(component.required)) {
-		$.each(component.required, function(key, paramObj) {
-			paramObj.required = true;
-			paramObj.name = key;
-			paramsTempArray.push(new paramVM(vm, paramObj));
-		});
-	}
-	if (component && !jQuery.isEmptyObject(component.optional)) {
-		$.each(component.optional, function(key, paramObj) {
-			paramObj.required = false;
-			paramObj.name = key;
-			paramsTempArray.push(new paramVM(vm, paramObj));
-		});
-	}
+	// add the paramaters to the paramater list
+	var paramsTempArray = component.params.map((paramObj) => new paramVM(vm, paramObj));
 	
 	addOrError(paramsTempArray, vm.errors, "No parameters defined");
 	vm.params(paramsTempArray); // Add required/optional params to the main list

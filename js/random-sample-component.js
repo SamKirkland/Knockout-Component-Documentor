@@ -5,7 +5,6 @@ ko.components.register('random-sample-component', {
 	 * @component random-sample-component
 	 * @tags ["demo", "example", "tag", "test"]
 	 * @description This is a sample component to show the usage of <knockout-component-documentor> - you can test one of each editor.
-	 * @category Knockout Component Documentor
 	 * @param {string|boolean|json} [params.title=Default title] The title of the component
 	 * @param {string} [params.description=default description] A description under the title
 	 * @param {ko.observable(string)} [params.observable=observable string] A knockout observable string, changing this param will auto unbind and rebind the component

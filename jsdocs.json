@@ -5,6 +5,139 @@
     "name": "viewModel",
     "kind": "function",
     "scope": "global",
+    "description": "This is a sample component to show the usage of <knockout-component-documentor> - you can test one of each editor.",
+    "params": [
+      {
+        "type": {
+          "names": [
+            "string",
+            "boolean",
+            "json"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "Default title",
+        "description": "The title of the component",
+        "name": "params.title"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "default description",
+        "description": "A description under the title",
+        "name": "params.description"
+      },
+      {
+        "type": {
+          "names": [
+            "ko.observable(string)"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "observable string",
+        "description": "A knockout observable string, changing this param will auto unbind and rebind the component",
+        "name": "params.observable"
+      },
+      {
+        "type": {
+          "names": [
+            "string"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "glyphicon-user",
+        "description": "The icon to show below the title",
+        "name": "params.icon"
+      },
+      {
+        "type": {
+          "names": [
+            "boolean"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": true,
+        "description": "Doesn't do anything...",
+        "name": "params.uselessParam"
+      },
+      {
+        "type": {
+          "names": [
+            "number"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": 1,
+        "description": "The border size in pixels of the border",
+        "name": "params.borderWidth"
+      },
+      {
+        "type": {
+          "names": [
+            "json"
+          ]
+        },
+        "optional": true,
+        "description": "JSON editor",
+        "name": "params.jsonParam"
+      },
+      {
+        "type": {
+          "names": [
+            "ko.observableArray(string)"
+          ]
+        },
+        "optional": true,
+        "defaultvalue": "something",
+        "description": "knockout observableArray",
+        "name": "params.koObservableArray"
+      },
+      {
+        "type": {
+          "names": [
+            "array"
+          ]
+        },
+        "description": "js array",
+        "name": "params.jsArray"
+      },
+      {
+        "type": {
+          "names": [
+            "innerHtml"
+          ]
+        },
+        "description": "Passes through the HTML",
+        "name": "params.innerHtml"
+      }
+    ],
+    "customTags": [
+      {
+        "tag": "component",
+        "value": "random-sample-component"
+      },
+      {
+        "tag": "tags",
+        "value": "[\"demo\", \"example\", \"tag\", \"test\"]"
+      }
+    ],
+    "meta": {
+      "lineno": 19,
+      "filename": "random-sample-component.js",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 4
+  },
+  {
+    "id": "viewModel",
+    "longname": "viewModel",
+    "name": "viewModel",
+    "kind": "function",
+    "scope": "global",
     "description": "A quite wonderful component.",
     "params": [
       {
@@ -181,140 +314,6 @@
     "order": 3
   },
   {
-    "id": "viewModel",
-    "longname": "viewModel",
-    "name": "viewModel",
-    "kind": "function",
-    "scope": "global",
-    "description": "This is a sample component to show the usage of <knockout-component-documentor> - you can test one of each editor.",
-    "params": [
-      {
-        "type": {
-          "names": [
-            "string",
-            "boolean",
-            "json"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": "Default title",
-        "description": "The title of the component",
-        "name": "params.title"
-      },
-      {
-        "type": {
-          "names": [
-            "string"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": "default description",
-        "description": "A description under the title",
-        "name": "params.description"
-      },
-      {
-        "type": {
-          "names": [
-            "ko.observable(string)"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": "observable string",
-        "description": "A knockout observable string, changing this param will auto unbind and rebind the component",
-        "name": "params.observable"
-      },
-      {
-        "type": {
-          "names": [
-            "string"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": "glyphicon-user",
-        "description": "The icon to show below the title",
-        "name": "params.icon"
-      },
-      {
-        "type": {
-          "names": [
-            "boolean"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": true,
-        "description": "Doesn't do anything...",
-        "name": "params.uselessParam"
-      },
-      {
-        "type": {
-          "names": [
-            "number"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": 1,
-        "description": "The border size in pixels of the border",
-        "name": "params.borderWidth"
-      },
-      {
-        "type": {
-          "names": [
-            "json"
-          ]
-        },
-        "optional": true,
-        "description": "JSON editor",
-        "name": "params.jsonParam"
-      },
-      {
-        "type": {
-          "names": [
-            "ko.observableArray()"
-          ]
-        },
-        "optional": true,
-        "defaultvalue": "something",
-        "description": "knockout observableArray",
-        "name": "params.koObservableArray"
-      },
-      {
-        "type": {
-          "names": [
-            "array"
-          ]
-        },
-        "description": "js array",
-        "name": "params.jsArray"
-      },
-      {
-        "type": {
-          "names": [
-            "innerHtml"
-          ]
-        },
-        "description": "Passes through the HTML",
-        "name": "params.innerHtml"
-      }
-    ],
-    "category": "Knockout Component Documentor",
-    "customTags": [
-      {
-        "tag": "component",
-        "value": "random-sample-component"
-      },
-      {
-        "tag": "tags",
-        "value": "[\"demo\", \"example\", \"tag\", \"test\"]"
-      }
-    ],
-    "meta": {
-      "lineno": 20,
-      "filename": "random-sample-component.js",
-      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
-    },
-    "order": 4
-  },
-  {
     "id": "viewModel.createViewModel",
     "longname": "viewModel.createViewModel",
     "name": "createViewModel",
@@ -378,7 +377,7 @@
       }
     ],
     "meta": {
-      "lineno": 416,
+      "lineno": 406,
       "filename": "knockout-component-documentor.js",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },

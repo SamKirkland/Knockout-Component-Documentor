@@ -145,14 +145,14 @@ All settings are optional. Pass the params into the component.
 | componentsToPreview   | `observableArray` | `[]`              | The ko.observableArray that will be updated with components being previewed |
 | documentSelf          | `boolean`         | `false`           | Should `<knockout-component-preview>` be included in the documentation output |
 | view                  | `string`          | `undefined`       | Determines which view to show onload, pass "dynamicEdit" or "table" |
-| includeFn             | `function`        | `function(componentName)`    | A function used transform the component name into your include tags |
+| includeFn             | `function`        | `function(componentName, filename, filepath)`    | A function used transform the component name into your include tags |
 | jsdocs                | `Object`          | `undefined`       | `jsdocs: { location: '../jsdocs.json', status: status }` |
 
 
 ##### Example:
 ```html
 <knockout-component-preview params="
-	includeFn: function(componentName){
+	includeFn: function(componentName, filename, filepath){
 		return `<script src='/yourCustomFolder/${componentName}.js'></script>`;
 	}
 ">

@@ -4,8 +4,9 @@
 # Custom for Visual Studio
 *.cs     diff=csharp
 
-# Treat the webpack built files as binary
-*.bundle.js binary
+# Treat webpack files as auto-generated
+*.bundle.js linguist-generated=true
+jsdocs.json linguist-generated=true
 
 # Standard to msysgit
 *.doc	 diff=astextplain
