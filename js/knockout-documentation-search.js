@@ -4,8 +4,8 @@ function getAllComponents() {
 	return ko.components.Ec;
 }
 
-var link = function(name, docs){
-	var vm = this;
+let link = function(name, docs){
+	let vm = this;
 
 	vm.name = name;
 
@@ -18,7 +18,7 @@ var link = function(name, docs){
 	vm.isActive = ko.observable(false);
 
 	vm.click = function(parent){
-		parent.components.forEach(function(item){
+		parent.components.forEach((item) => {
 			item.isActive(false);
 		});
 
@@ -43,7 +43,7 @@ ko.components.register('documentation-search', {
 	 * @param {string} [params.placeholderText=Search for...] The default text to display in the search box
 	 */
 	viewModel: function(params) {
-		var self = this;
+		let self = this;
 		
 		self.selectedComponent = params.selectedComponent;
 
@@ -59,28 +59,28 @@ ko.components.register('documentation-search', {
 		self.components = [];
 
 		// add all registered components
-		$.each(getAllComponents(), function(key, componentRegistration){
+		$.each(getAllComponents(), (key, componentRegistration) => {
 			self.components.push(new link(key, componentRegistration.docs));
 		});
 
 		// a list of components that have no category
-		self.componentsWOCategory = self.components.filter(function(x){
+		self.componentsWOCategory = self.components.filter((x) => {
 			return x.category === undefined;
 		});
 
 		// a list of components with categories. Grouped into there categories
-		var groupedCategories =self.components
-			.filter(function(x){
+		let groupedCategories =self.components
+			.filter((x) => {
 				return x.category !== undefined;
 			});
 
-		var group_to_values = groupedCategories.reduce(function(obj,item){
+		let group_to_values = groupedCategories.reduce((obj, item) => {
 			obj[item.category] = obj[item.category] || [];
 			obj[item.category].push(item);
 			return obj;
 		}, {});
 
-		self.componentsCategory = Object.keys(group_to_values).map(function(key){
+		self.componentsCategory = Object.keys(group_to_values).map((key) => {
 			return {group: key, subMenus: group_to_values[key]};
 		});
 
@@ -88,30 +88,33 @@ ko.components.register('documentation-search', {
 		if (self.selectedComponent() === undefined) {
 			self.selectedComponent(Object.keys(getAllComponents())[0]);
 			self.components
-				.find(function(x) {
+				.find((x) => {
 					return x.name === self.selectedComponent();
 				})
 				.isActive(true);
 		}
 
-		self.filteredLinks = ko.computed(function(){
-			var searchingText = self.searchInput().toLowerCase();
+		self.filteredLinks = ko.computed(() => {
+			let searchingText = self.searchInput().toLowerCase();
 			if (self.components !== undefined) {
-				self.components.forEach(function(link){
+				self.components.forEach((link) => {
+					let titleMatch;
+					let descriptionMatch;
+
 					// search title
 					if (link.name) {
-						var titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
+						titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
 					}
 					
 					// search description
 					if (link.description) {
-						var descriptionMatch = link.description.toLowerCase().indexOf(searchingText) > -1;
+						descriptionMatch = link.description.toLowerCase().indexOf(searchingText) > -1;
 					}
 					
 					// search tags
-					var tagMatch = false;
+					let tagMatch = false;
 					if (link.tags) {
-						link.tags.forEach(function(tag){
+						link.tags.forEach((tag) => {
 							if (tagMatch) {
 								return false; // stop loop
 							}

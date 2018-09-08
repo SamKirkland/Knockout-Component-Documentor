@@ -2,7 +2,7 @@ require("./jsdoc-sample-component.scss");
 
 
 function jsDocSampleComponentVM(params) {
-	var vm = this;
+	let vm = this;
 
 	vm.observableString = params.observableString;
 	vm.defaultString = params.defaultString || "default value";

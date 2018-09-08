@@ -19,33 +19,6 @@ function knockoutType(baseType) {
 	return this;
 }
 
-Object.flatten = function(data) {
-    var result = {};
-    function recurse (cur, prop) {
-        if (Object(cur) !== cur) {
-            result[prop] = cur;
-        } else if (Array.isArray(cur)) {
-             for(var i=0, l=cur.length; i<l; i++)
-                 recurse(cur[i], prop + "[" + i + "]");
-            if (l == 0)
-                result[prop] = [];
-        } else {
-            var isEmpty = true;
-            for (var p in cur) {
-                isEmpty = false;
-                recurse(cur[p], prop ? prop+"."+p : p);
-            }
-            if (isEmpty && prop)
-                result[prop] = {};
-        }
-    }
-    recurse(data, "");
-    return result;
-}
-
-var typesValues = Object.values(Object.flatten(ko.types));
-
-
 window.paramAsText = function(property) {
 	if (property === undefined) {
 		return "undefined";
@@ -72,7 +45,7 @@ window.idGen = new Generator();
 ko.bindingHandlers.uniqueIdFunction = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 		// bind a unique ID
-		var uniqueID = idGen.getId();
+		let uniqueID = idGen.getId();
 		$(element).attr("id", uniqueID);
 		
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
@@ -81,7 +54,7 @@ ko.bindingHandlers.uniqueIdFunction = {
 
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-		var uniqueID = idGen.getId();
+		let uniqueID = idGen.getId();
 		$(element).attr("id", uniqueID);
 		valueAccessor()(uniqueID);
 	}
@@ -108,8 +81,8 @@ ko.bindingHandlers.clipboard = {
 
 ko.bindingHandlers.innerHtml = {
 	update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-		var value = valueAccessor();
-		var valueUnwrapped = ko.unwrap(value);
+		let value = valueAccessor();
+		let valueUnwrapped = ko.unwrap(value);
 
 		if (valueUnwrapped === null) {
 			return;
@@ -143,7 +116,7 @@ ko.bindingHandlers.innerHtml = {
 };
 
 window.codeEditorFunction = function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-	var bindingParams = ko.utils.unwrapObservable(valueAccessor());
+	let bindingParams = ko.utils.unwrapObservable(valueAccessor());
 	
 	if (bindingParams.mode === "json") {
 		bindingParams.mode = { name: "javascript", json: true };
@@ -153,7 +126,7 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 		bindingParams.readOnly = false;
 	}
 	
-	var myCodeMirror = CodeMirror.fromTextArea(element, {
+	let myCodeMirror = CodeMirror.fromTextArea(element, {
 		lineNumbers: true,
 		mode: bindingParams.mode,
 		readOnly: bindingParams.readOnly,

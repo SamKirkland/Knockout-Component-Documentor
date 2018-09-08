@@ -10,14 +10,14 @@ ko.components.register('knockout-type-editor', {
 	 * @param {string} [params.optionalParam=default] description!
 	 */
 	viewModel: function(params) {
-		var vm = this;
+		let vm = this;
 
 		vm.value = params.value;
 		vm.types = params.types;
 		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
-		vm.textBinding.subscribe(function(newValue){
+		vm.textBinding.subscribe((newValue) => {
 			if (newValue === undefined || newValue.length === 0) {
 				vm.value("undefined");
 				return;
@@ -62,7 +62,7 @@ ko.components.register('knockout-type-editor', {
 					color = "#bbb";
 			}
 			
-			var isDefault = "";
+			let isDefault = "";
 			if (type === vm.defaultValue) {
 				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
 			}

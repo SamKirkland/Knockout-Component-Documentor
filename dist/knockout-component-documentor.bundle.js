@@ -11608,33 +11608,6 @@ function knockoutType(baseType) {
 	return this;
 }
 
-Object.flatten = function(data) {
-    var result = {};
-    function recurse (cur, prop) {
-        if (Object(cur) !== cur) {
-            result[prop] = cur;
-        } else if (Array.isArray(cur)) {
-             for(var i=0, l=cur.length; i<l; i++)
-                 recurse(cur[i], prop + "[" + i + "]");
-            if (l == 0)
-                result[prop] = [];
-        } else {
-            var isEmpty = true;
-            for (var p in cur) {
-                isEmpty = false;
-                recurse(cur[p], prop ? prop+"."+p : p);
-            }
-            if (isEmpty && prop)
-                result[prop] = {};
-        }
-    }
-    recurse(data, "");
-    return result;
-}
-
-var typesValues = Object.values(Object.flatten(ko.types));
-
-
 window.paramAsText = function(property) {
 	if (property === undefined) {
 		return "undefined";
@@ -11661,7 +11634,7 @@ window.idGen = new Generator();
 ko.bindingHandlers.uniqueIdFunction = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 		// bind a unique ID
-		var uniqueID = idGen.getId();
+		let uniqueID = idGen.getId();
 		$(element).attr("id", uniqueID);
 		
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
@@ -11670,7 +11643,7 @@ ko.bindingHandlers.uniqueIdFunction = {
 
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-		var uniqueID = idGen.getId();
+		let uniqueID = idGen.getId();
 		$(element).attr("id", uniqueID);
 		valueAccessor()(uniqueID);
 	}
@@ -11697,8 +11670,8 @@ ko.bindingHandlers.clipboard = {
 
 ko.bindingHandlers.innerHtml = {
 	update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-		var value = valueAccessor();
-		var valueUnwrapped = ko.unwrap(value);
+		let value = valueAccessor();
+		let valueUnwrapped = ko.unwrap(value);
 
 		if (valueUnwrapped === null) {
 			return;
@@ -11732,7 +11705,7 @@ ko.bindingHandlers.innerHtml = {
 };
 
 window.codeEditorFunction = function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-	var bindingParams = ko.utils.unwrapObservable(valueAccessor());
+	let bindingParams = ko.utils.unwrapObservable(valueAccessor());
 	
 	if (bindingParams.mode === "json") {
 		bindingParams.mode = { name: "javascript", json: true };
@@ -11742,7 +11715,7 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 		bindingParams.readOnly = false;
 	}
 	
-	var myCodeMirror = __WEBPACK_IMPORTED_MODULE_0_codemirror_lib_codemirror_js___default.a.fromTextArea(element, {
+	let myCodeMirror = __WEBPACK_IMPORTED_MODULE_0_codemirror_lib_codemirror_js___default.a.fromTextArea(element, {
 		lineNumbers: true,
 		mode: bindingParams.mode,
 		readOnly: bindingParams.readOnly,
@@ -13939,8 +13912,8 @@ function getAllComponents() {
 	return ko.components.Ec;
 }
 
-var link = function(name, docs){
-	var vm = this;
+let link = function(name, docs){
+	let vm = this;
 
 	vm.name = name;
 
@@ -13953,7 +13926,7 @@ var link = function(name, docs){
 	vm.isActive = ko.observable(false);
 
 	vm.click = function(parent){
-		parent.components.forEach(function(item){
+		parent.components.forEach((item) => {
 			item.isActive(false);
 		});
 
@@ -13978,7 +13951,7 @@ ko.components.register('documentation-search', {
 	 * @param {string} [params.placeholderText=Search for...] The default text to display in the search box
 	 */
 	viewModel: function(params) {
-		var self = this;
+		let self = this;
 		
 		self.selectedComponent = params.selectedComponent;
 
@@ -13994,28 +13967,28 @@ ko.components.register('documentation-search', {
 		self.components = [];
 
 		// add all registered components
-		$.each(getAllComponents(), function(key, componentRegistration){
+		$.each(getAllComponents(), (key, componentRegistration) => {
 			self.components.push(new link(key, componentRegistration.docs));
 		});
 
 		// a list of components that have no category
-		self.componentsWOCategory = self.components.filter(function(x){
+		self.componentsWOCategory = self.components.filter((x) => {
 			return x.category === undefined;
 		});
 
 		// a list of components with categories. Grouped into there categories
-		var groupedCategories =self.components
-			.filter(function(x){
+		let groupedCategories =self.components
+			.filter((x) => {
 				return x.category !== undefined;
 			});
 
-		var group_to_values = groupedCategories.reduce(function(obj,item){
+		let group_to_values = groupedCategories.reduce((obj, item) => {
 			obj[item.category] = obj[item.category] || [];
 			obj[item.category].push(item);
 			return obj;
 		}, {});
 
-		self.componentsCategory = Object.keys(group_to_values).map(function(key){
+		self.componentsCategory = Object.keys(group_to_values).map((key) => {
 			return {group: key, subMenus: group_to_values[key]};
 		});
 
@@ -14023,30 +13996,33 @@ ko.components.register('documentation-search', {
 		if (self.selectedComponent() === undefined) {
 			self.selectedComponent(Object.keys(getAllComponents())[0]);
 			self.components
-				.find(function(x) {
+				.find((x) => {
 					return x.name === self.selectedComponent();
 				})
 				.isActive(true);
 		}
 
-		self.filteredLinks = ko.computed(function(){
-			var searchingText = self.searchInput().toLowerCase();
+		self.filteredLinks = ko.computed(() => {
+			let searchingText = self.searchInput().toLowerCase();
 			if (self.components !== undefined) {
-				self.components.forEach(function(link){
+				self.components.forEach((link) => {
+					let titleMatch;
+					let descriptionMatch;
+
 					// search title
 					if (link.name) {
-						var titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
+						titleMatch = link.name.toLowerCase().indexOf(searchingText) > -1;
 					}
 					
 					// search description
 					if (link.description) {
-						var descriptionMatch = link.description.toLowerCase().indexOf(searchingText) > -1;
+						descriptionMatch = link.description.toLowerCase().indexOf(searchingText) > -1;
 					}
 					
 					// search tags
-					var tagMatch = false;
+					let tagMatch = false;
 					if (link.tags) {
-						link.tags.forEach(function(tag){
+						link.tags.forEach((tag) => {
 							if (tagMatch) {
 								return false; // stop loop
 							}
@@ -14167,7 +14143,7 @@ function defaultValue(value, defaultValue) {
 }
 
 function jsDocTypeToComponentType(jsDocType) {
-	var regexp = /ko\.(\w+)\((.*)\)/i;
+	let regexp = /ko\.(\w+)\((.*)\)/i;
 
 	if (!regexp.test(jsDocType)) {
 		// not a knockout type type
@@ -14175,44 +14151,44 @@ function jsDocTypeToComponentType(jsDocType) {
 	}
 
 	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
-	var matches = regexp.exec(jsDocType);
+	let matches = regexp.exec(jsDocType);
 	return matches[2];
 }
 
 function jsDocsToComponentDocs(jsDocs) {
-	var allComponents = [];
+	let allComponents = [];
 
 	// ToDo: Only export jsdocs on items that use @component
-	$.each(jsDocs, function(index, jsDoc) {
-		var componentDocs = {
-			description: jsDoc.description,
-			category: jsDoc.category,
-			// ToDo: combine required and optional
-			params: [],
-			filename: jsDoc.meta.filename,
-			filepath: jsDoc.meta.path
-		};
-
-		// ToDo: convert to .map
-		$.each(jsDoc.params, function(paramIndex, param) {
+	$.each(jsDocs, (index, jsDoc) => {
+		let paramMapped = jsDoc.params.map((param) => {
 			// remove "params" from the front of each param
-			var paramName = param.name;
-			var regexp = /\w+\.(.*)/i;
+			let paramName = param.name;
+			let regexp = /\w+\.(.*)/i;
 			if (regexp.test(paramName)) {
 				paramName = regexp.exec(paramName)[1];
 			}
 
-			componentDocs.params.push({
+			return {
 				name: paramName,
 				required: !param.optional,
 				description: param.description,
 				defaultValue: param.defaultvalue,
 				type: jsDocTypeToComponentType(param.type.names[0])
-			});
+			};
 		});
 
+
+		let componentDocs = {
+			description: jsDoc.description,
+			category: jsDoc.category,
+			// ToDo: combine required and optional
+			params: paramMapped,
+			filename: jsDoc.meta.filename,
+			filepath: jsDoc.meta.path
+		};
+
 		// move all the custom tags onto the componentDocs object
-		$.each(jsDoc.customTags, function(customTagsIndex, customTag) {
+		$.each(jsDoc.customTags, (customTagsIndex, customTag) => {
 			if (customTag.tag === "tags") {
 				// try to convert tags to array
 				componentDocs[customTag.tag] = JSON.parse(customTag.value);
@@ -14228,11 +14204,11 @@ function jsDocsToComponentDocs(jsDocs) {
 	return allComponents;
 }
 
-var componentDocumentorVM = function(params, componentInfo) {
-	var vm = this;
+let componentDocumentorVM = function(params, componentInfo) {
+	let vm = this;
 	
-	var defaultIncludeFn = function(componentName, filename, filepath) { return `<script src="/js/${componentName}.js"></script>`; };
-	var includeFn = params.includeFn || defaultIncludeFn;
+	let defaultIncludeFn = function(componentName, filename, filepath) { return `<script src="/js/${componentName}.js"></script>`; };
+	let includeFn = params.includeFn || defaultIncludeFn;
 
 	vm.loadingComplete = ko.observable(false);
 
@@ -14245,13 +14221,13 @@ var componentDocumentorVM = function(params, componentInfo) {
 	}
 	else {
 		// load the jsdoc json file
-		$.getJSON(params.jsdocs.location, function(jsDocs) {
-			var jsDocs = jsDocsToComponentDocs(jsDocs);
+		$.getJSON(params.jsdocs.location, (jsDocs) => {
+			let jsDocsMapped = jsDocsToComponentDocs(jsDocs);
 
 			// add jsDocs to component registration
-			$.each(jsDocs, function(index, jsDoc) {
+			$.each(jsDocsMapped, (index, jsDoc) => {
 				if (jsDoc.component !== undefined && componentExists(jsDoc.component)) {
-					var componentRegistration = getAllComponents()[jsDoc.component];
+					let componentRegistration = getAllComponents()[jsDoc.component];
 
 					// merge jsDocs into docs
 					componentRegistration.docs = $.extend(true, componentRegistration.docs, jsDoc);
@@ -14294,9 +14270,9 @@ var componentDocumentorVM = function(params, componentInfo) {
 	return vm;
 };
 
-var componentDocumentationVM = function(parent, construct) {
-	var vm = this;
-	var component = defaultValue(construct.docs, {});
+let componentDocumentationVM = function(parent, construct) {
+	let vm = this;
+	let component = defaultValue(construct.docs, {});
 	
 	vm.errors = ko.observableArray();
 
@@ -14318,16 +14294,16 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.previewView = function() { vm.view("Preview"); };
 	vm.tableView = function() { vm.view("Table"); };
 
-	var blackListedComponents = ['knockout-component-documentor', 'documentation-search', 'knockout-type-editor'];
+	let blackListedComponents = ['knockout-component-documentor', 'documentation-search', 'knockout-type-editor'];
 	vm.blackListedComponent = blackListedComponents.indexOf(vm.componentName) >= 0;
 
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
 	/* DELETE THE FOLLOWING ------------------------------ */
-	vm.componentParamObject = ko.computed(function(){
-		var paramObject = {};
-		vm.params().forEach(function(element, index){
+	vm.componentParamObject = ko.computed(() => {
+		let paramObject = {};
+		vm.params().forEach((element, index) => {
 			if (element.value() !== element.defaultValue && element.types[0] !== "innerHtml") {
 				paramObject[element.name] = element.value();
 			}
@@ -14342,7 +14318,7 @@ var componentDocumentationVM = function(parent, construct) {
 
 	vm.innerHtml = ko.observable();
 	vm.html = ko.computed(() => {
-		var paramsList =
+		let paramsList =
 			vm.params()
 			.filter((param) => {
 				let isDefaultParam = param.value() === param.defaultValue;
@@ -14371,8 +14347,7 @@ var componentDocumentationVM = function(parent, construct) {
 		}
 		
 		let htmlParam = "";
-		if (vm.htmlParam !== undefined && vm.htmlParam !== null /* && vm.htmlParam.value() !== vm.htmlParam.defaultValue */ ) {
-			console.log(vm.htmlParam);
+		if (vm.htmlParam !== undefined && vm.htmlParam !== null && vm.htmlParam.value() !== vm.htmlParam.defaultValue && vm.htmlParam.value() !== "undefined") {
 			htmlParam = `\n${vm.htmlParam.value()}\n`;
 		}
 		let computedHTML = `<${vm.componentName}${paramsText}>${htmlParam}</${vm.componentName}>`;
@@ -14395,7 +14370,7 @@ var componentDocumentationVM = function(parent, construct) {
 	}
 
 	// add the paramaters to the paramater list
-	var paramsTempArray = component.params.map((paramObj) => new paramVM(vm, paramObj));
+	let paramsTempArray = component.params.map((paramObj) => new paramVM(vm, paramObj));
 	
 	addOrError(paramsTempArray, vm.errors, "No parameters defined");
 	vm.params(paramsTempArray); // Add required/optional params to the main list
@@ -14422,8 +14397,8 @@ var componentDocumentationVM = function(parent, construct) {
 	return vm;
 };
 
-var paramVM = function(parent, construct){
-	var vm = this;
+let paramVM = function(parent, construct){
+	let vm = this;
 	
 	vm.name = construct.name || ""; // Name something something error
 	vm.required = construct.required;
@@ -14447,9 +14422,9 @@ var paramVM = function(parent, construct){
 		return type;
 	}
 	
-	vm.typeFormatted = ko.computed(function(){
-		return vm.types.map(function(t) {
-			return supportedTypes(t, function(){
+	vm.typeFormatted = ko.computed(() => {
+		return vm.types.map((t) => {
+			return supportedTypes(t, () => {
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
 					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Documentor#SupportedTypes">supported type</a>.`
@@ -14589,14 +14564,14 @@ ko.components.register('knockout-type-editor', {
 	 * @param {string} [params.optionalParam=default] description!
 	 */
 	viewModel: function(params) {
-		var vm = this;
+		let vm = this;
 
 		vm.value = params.value;
 		vm.types = params.types;
 		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
-		vm.textBinding.subscribe(function(newValue){
+		vm.textBinding.subscribe((newValue) => {
 			if (newValue === undefined || newValue.length === 0) {
 				vm.value("undefined");
 				return;
@@ -14641,7 +14616,7 @@ ko.components.register('knockout-type-editor', {
 					color = "#bbb";
 			}
 			
-			var isDefault = "";
+			let isDefault = "";
 			if (type === vm.defaultValue) {
 				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
 			}
@@ -14754,7 +14729,7 @@ ko.components.register('random-sample-component', {
 	 * @param {innerHtml} params.innerHtml Passes through the HTML
 	 */
 	viewModel: function(params) {
-		var vm = this;
+		let vm = this;
 
 		vm.title = ko.unwrap(params.title) || "Default Title";
 		vm.description = ko.unwrap(params.description) || "default description";
@@ -14846,7 +14821,7 @@ __webpack_require__(31);
 
 
 function jsDocSampleComponentVM(params) {
-	var vm = this;
+	let vm = this;
 
 	vm.observableString = params.observableString;
 	vm.defaultString = params.defaultString || "default value";

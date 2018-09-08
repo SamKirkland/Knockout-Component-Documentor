@@ -17,7 +17,7 @@ ko.components.register('random-sample-component', {
 	 * @param {innerHtml} params.innerHtml Passes through the HTML
 	 */
 	viewModel: function(params) {
-		var vm = this;
+		let vm = this;
 
 		vm.title = ko.unwrap(params.title) || "Default Title";
 		vm.description = ko.unwrap(params.description) || "default description";
