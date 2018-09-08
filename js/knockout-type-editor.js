@@ -14,7 +14,7 @@ ko.components.register('knockout-type-editor', {
 
 		vm.value = params.value;
 		vm.types = params.types;
-		vm.typeEditing = ko.observable(ko.types.getType(vm.types[0])); // default to first item in list
+		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
@@ -22,14 +22,15 @@ ko.components.register('knockout-type-editor', {
 				vm.value("undefined");
 				return;
 			}
-			if (ko.unwrap(vm.typeEditing) === ko.types.number.baseType) {
+
+			if (ko.unwrap(vm.typeEditing) === "number") {
 				vm.value(parseInt(newValue));
 			}
-			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean.baseType) {
+			else if (ko.unwrap(vm.typeEditing) === "boolean") {
 				vm.value(JSON.parse(newValue));
 			}
 			else {
-				vm.value(ko.types.getType(newValue));
+				vm.value(newValue);
 			}
 		});
 		
@@ -42,26 +43,18 @@ ko.components.register('knockout-type-editor', {
 		vm.checkIfDefault = function (data) {
 			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
 		};
-		
-		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
-			var found = ko.types.getType(type).match(/(?:\[\w+ )?(\w+)(?:\])?/i);
-			return found[1];
-			return type;
-		};
 
-		vm.colorizeData = function(data) {
-			var serialized = paramAsText(data);
-			
-			switch (ko.types.get(data)) {
-				case ko.types.number:
+		vm.colorizeData = function(type) {
+			switch (type) {
+				case "number":
 					color = "#831a05";
 					break;
 					
-				case ko.types.string:
+				case "string":
 					color = "#235712";
 					break;
 					
-				case ko.types.boolean:
+				case "boolean":
 					color = "#0d7cca";
 					break;
 				
@@ -70,7 +63,7 @@ ko.components.register('knockout-type-editor', {
 			}
 			
 			var isDefault = "";
-			if (data === vm.defaultValue) {
+			if (type === vm.defaultValue) {
 				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
 			}
 			

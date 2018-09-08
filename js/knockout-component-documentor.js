@@ -30,69 +30,12 @@ function jsDocTypeToComponentType(jsDocType) {
 
 	if (!regexp.test(jsDocType)) {
 		// not a knockout type type
-		return jsDocToBaseType(jsDocType);
+		return jsDocType;
 	}
 
 	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
 	var matches = regexp.exec(jsDocType);
-	var baseType = jsDocToBaseType(matches[2]);
-
-	switch (matches[1].toLowerCase()) {
-		case "observable":
-			return baseType.observable;
-
-		case "observablearray":
-			return baseType.observableArray;
-
-		case "computed":
-			return baseType.computed;
-
-		default:
-			return baseType;
-	}
-}
-
-function jsDocToBaseType(jsDocType) {
-	switch (jsDocType.toLowerCase()) {
-		case "object":
-			return ko.types.object;
-
-		case "date":
-			return ko.types.date;
-
-		case "datetime":
-			return ko.types.dateTime;
-
-		case "array":
-			return ko.types.array;
-
-		case "string":
-			return ko.types.string;
-
-		case "boolean":
-			return ko.types.boolean;
-
-		case "number":
-			return ko.types.number;
-
-		case "function":
-			return ko.types.function;
-
-		case "json":
-			return ko.types.json;
-
-		case "html":
-			return ko.types.html;
-
-		case "innerhtml":
-			return ko.types.innerHtml;
-
-		case "css":
-			return ko.types.css;
-
-		default:
-			return ko.types.other;
-	}
+	return matches[2];
 }
 
 function jsDocsToComponentDocs(jsDocs) {
@@ -244,10 +187,11 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentParamObject = ko.computed(function(){
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
-			if (element.value() !== element.defaultValue && element.types[0] !== ko.types.innerHtml) {
+			if (element.value() !== element.defaultValue && element.types[0] !== "innerHtml") {
 				paramObject[element.name] = element.value();
 			}
 		});
+
 		return paramObject;
 	});
 	/* DELETE THE FOLLOWING ------------------------------ */
@@ -261,12 +205,22 @@ var componentDocumentationVM = function(parent, construct) {
 			vm.params()
 			.filter((param) => {
 				let isDefaultParam = param.value() === param.defaultValue;
-				let isInnerHTML = param.types[0].baseType === "[object InnerHTML]";
+				let isInnerHTML = param.types[0] === "innerHtml";
 				
 				return !isDefaultParam && !isInnerHTML;
 			})
 			.map((param) => {
-				return `${param.name}: ${JSON.stringify(param.value())}`;
+				let value = param.value();
+
+				if (value === "undefined") {
+					return undefined;
+				}
+				
+				if (Array.isArray(value)) {
+					return `[${value}]`;
+				}
+
+				return `${param.name}: ${JSON.stringify(value)}`;
 			});
 
 		let paramsText = "";
@@ -276,10 +230,8 @@ var componentDocumentationVM = function(parent, construct) {
 		}
 		
 		let htmlParam = "";
-		if (vm.htmlParam !== undefined && vm.htmlParam !== null &&
-			vm.htmlParam.value() !== undefined &&
-			vm.htmlParam.value() !== "undefined") {
-			
+		if (vm.htmlParam !== undefined && vm.htmlParam !== null /* && vm.htmlParam.value() !== vm.htmlParam.defaultValue */ ) {
+			console.log(vm.htmlParam);
 			htmlParam = `\n${vm.htmlParam.value()}\n`;
 		}
 		let computedHTML = `<${vm.componentName}${paramsText}>${htmlParam}</${vm.componentName}>`;
@@ -308,23 +260,19 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.params(paramsTempArray); // Add required/optional params to the main list
 	
 
-	// All innerHtml params
-	var allInnerHtmlParams = vm.params().filter(function(element) {
-		return element.typeFormatted()[0] === "InnerHTML";
-	});
-
-	if (allInnerHtmlParams.length > 0) {
-		vm.htmlParam = allInnerHtmlParams[0];
+	let innerHtmlParams = vm.params().filter((param) => param.typeFormatted()[0] === "innerHtml");
+	if (innerHtmlParams.length === 1) {
+		vm.htmlParam = innerHtmlParams[0];
 	}
 	else {
 		vm.htmlParam = null;
 	}
 
-	if (allInnerHtmlParams.length > 1) {
+	if (innerHtmlParams.length > 1) {
 		vm.errors.push(
-			`This component has multiple parameters of type 'InnerHTML'<br>
+			`This component has multiple parameters of type 'innerHtml'<br>
 			To fix this error change the types of all but one parameter to something else.<br>
-			Offending parameters: <b>${allInnerHtmlParams.map(function(x) { return x.name; }).join(", ")}</b>`
+			Offending parameters: <b>${innerHtmlParams.map((x) => x.name).join(", ")}</b>`
 		);
 	}
 
@@ -346,10 +294,21 @@ var paramVM = function(parent, construct){
 	
 	vm.value = ko.observable(construct.defaultValue);
 	vm.types = convertToArray(construct.type);
+
+	function supportedTypes(type, errorCallback) {
+		let supportedTypes = ["string", "boolean", "number", "object", "array", "function", "json", "date", "dateTime", "html", "innerHtml", "css"];
+
+		if (!supportedTypes.includes(type)) {
+			errorCallback();
+			return "Unsupported Type";
+		}
+
+		return type;
+	}
 	
 	vm.typeFormatted = ko.computed(function(){
 		return vm.types.map(function(t) {
-			return ko.types.getFormatted(t, function(){
+			return supportedTypes(t, function(){
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
 					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Documentor#SupportedTypes">supported type</a>.`
@@ -358,19 +317,18 @@ var paramVM = function(parent, construct){
 		});
 	});
 
-	vm.dataTypeClass = function(data) {
-		var typeAsString = `[object ${data}]`;
-		switch (typeAsString) {
-			case ko.types.number.baseType:
+	vm.dataTypeClass = function(type) {
+		switch (type) {
+			case "number":
 				return "colorized-number";
 				
-			case ko.types.string.baseType:
+			case "string":
 				return "colorized-string";
 				
-			case ko.types.boolean.baseType:
+			case "boolean":
 				return "colorized-boolean";
 				
-			case ko.types.array.baseType:
+			case "array":
 				return "colorized-array";
 			
 			default:
@@ -379,7 +337,7 @@ var paramVM = function(parent, construct){
 	};
 	
 	function convertToArray(data) {
-		if (ko.types.get(data) === ko.types.array.baseType) {
+		if (Array.isArray(data)) {
 			return data;
 		}
 		

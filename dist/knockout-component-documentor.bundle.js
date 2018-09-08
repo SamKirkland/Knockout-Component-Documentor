@@ -11608,68 +11608,6 @@ function knockoutType(baseType) {
 	return this;
 }
 
-
-// ex: types.get(prop) === types.number
-ko.types = ko.types || {
-	get: function(prop) {
-		return Object.prototype.toString.call(prop);
-	},
-	getBaseType: function(prop) {
-		return ko.types.getType(prop).match(new RegExp(/(\[.*\])/i))[1];
-	},
-	compareType: function(prop1, prop2) {
-		return ko.types.getBaseType(prop1) === ko.types.getBaseType(prop2);
-	},
-	getType: function(prop) {
-		if (typeof prop === "object") {
-			return prop.baseType;
-		}
-		else {
-			return prop;
-		}
-	},
-	getFormatted: function(prop, errorCallback) {
-		var typeAsString = ko.types.getType(prop);
-
-		if (typesValues.indexOf(typeAsString) === -1) {
-			errorCallback();
-			return "Unsupported Type";
-		}
-
-		var baseType = typeAsString.match(/(?:\[\w+ )?(\w+)\]?/i)[1];
-
-		// return type with observable/observableArray/computed
-		/*
-		var regexp = /\]\s+(\w+)/i;
-		if (regexp.test(typeAsString)) {
-			var matches = regexp.exec(typeAsString);
-			return `${matches[1]} ${baseType}`;
-		}
-		*/
-
-		return baseType;
-	},
-	isKnockout: function(type) {
-		var typeAsString = ko.types.getType(prop);
-
-		return typeAsString.indexOf('observable') >= 0 || typeAsString.indexOf('computed') >= 0;
-	},
-	object: new knockoutType('[object Object]'),
-	date: new knockoutType('[object Date]'),
-	dateTime: new knockoutType('[object DateTime]'),
-	array: new knockoutType('[object Array]'),
-	string: new knockoutType('[object String]'),
-	boolean: new knockoutType('[object Boolean]'),
-	number: new knockoutType('[object Number]'),
-	function: new knockoutType('[object function]'),
-	json: new knockoutType('[object JSON]'),
-	html: new knockoutType('[object HTML]'),
-	innerHtml: new knockoutType('[object InnerHTML]'),
-	css: new knockoutType('[object CSS]'),
-	other: new knockoutType('[object Other]')
-};
-
-
 Object.flatten = function(data) {
     var result = {};
     function recurse (cur, prop) {
@@ -11702,7 +11640,7 @@ window.paramAsText = function(property) {
 		return "undefined";
 	}
 	
-	if (ko.types.get(property) === ko.types.number) {
+	if (property === "number") {
 		return property;
 	}
 	
@@ -14233,69 +14171,12 @@ function jsDocTypeToComponentType(jsDocType) {
 
 	if (!regexp.test(jsDocType)) {
 		// not a knockout type type
-		return jsDocToBaseType(jsDocType);
+		return jsDocType;
 	}
 
 	// detect if the type is a knockout type (ko.observable, ko.observableArray, ko.computed)
 	var matches = regexp.exec(jsDocType);
-	var baseType = jsDocToBaseType(matches[2]);
-
-	switch (matches[1].toLowerCase()) {
-		case "observable":
-			return baseType.observable;
-
-		case "observablearray":
-			return baseType.observableArray;
-
-		case "computed":
-			return baseType.computed;
-
-		default:
-			return baseType;
-	}
-}
-
-function jsDocToBaseType(jsDocType) {
-	switch (jsDocType.toLowerCase()) {
-		case "object":
-			return ko.types.object;
-
-		case "date":
-			return ko.types.date;
-
-		case "datetime":
-			return ko.types.dateTime;
-
-		case "array":
-			return ko.types.array;
-
-		case "string":
-			return ko.types.string;
-
-		case "boolean":
-			return ko.types.boolean;
-
-		case "number":
-			return ko.types.number;
-
-		case "function":
-			return ko.types.function;
-
-		case "json":
-			return ko.types.json;
-
-		case "html":
-			return ko.types.html;
-
-		case "innerhtml":
-			return ko.types.innerHtml;
-
-		case "css":
-			return ko.types.css;
-
-		default:
-			return ko.types.other;
-	}
+	return matches[2];
 }
 
 function jsDocsToComponentDocs(jsDocs) {
@@ -14447,10 +14328,11 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.componentParamObject = ko.computed(function(){
 		var paramObject = {};
 		vm.params().forEach(function(element, index){
-			if (element.value() !== element.defaultValue && element.types[0] !== ko.types.innerHtml) {
+			if (element.value() !== element.defaultValue && element.types[0] !== "innerHtml") {
 				paramObject[element.name] = element.value();
 			}
 		});
+
 		return paramObject;
 	});
 	/* DELETE THE FOLLOWING ------------------------------ */
@@ -14464,12 +14346,22 @@ var componentDocumentationVM = function(parent, construct) {
 			vm.params()
 			.filter((param) => {
 				let isDefaultParam = param.value() === param.defaultValue;
-				let isInnerHTML = param.types[0].baseType === "[object InnerHTML]";
+				let isInnerHTML = param.types[0] === "innerHtml";
 				
 				return !isDefaultParam && !isInnerHTML;
 			})
 			.map((param) => {
-				return `${param.name}: ${JSON.stringify(param.value())}`;
+				let value = param.value();
+
+				if (value === "undefined") {
+					return undefined;
+				}
+				
+				if (Array.isArray(value)) {
+					return `[${value}]`;
+				}
+
+				return `${param.name}: ${JSON.stringify(value)}`;
 			});
 
 		let paramsText = "";
@@ -14479,10 +14371,8 @@ var componentDocumentationVM = function(parent, construct) {
 		}
 		
 		let htmlParam = "";
-		if (vm.htmlParam !== undefined && vm.htmlParam !== null &&
-			vm.htmlParam.value() !== undefined &&
-			vm.htmlParam.value() !== "undefined") {
-			
+		if (vm.htmlParam !== undefined && vm.htmlParam !== null /* && vm.htmlParam.value() !== vm.htmlParam.defaultValue */ ) {
+			console.log(vm.htmlParam);
 			htmlParam = `\n${vm.htmlParam.value()}\n`;
 		}
 		let computedHTML = `<${vm.componentName}${paramsText}>${htmlParam}</${vm.componentName}>`;
@@ -14511,23 +14401,19 @@ var componentDocumentationVM = function(parent, construct) {
 	vm.params(paramsTempArray); // Add required/optional params to the main list
 	
 
-	// All innerHtml params
-	var allInnerHtmlParams = vm.params().filter(function(element) {
-		return element.typeFormatted()[0] === "InnerHTML";
-	});
-
-	if (allInnerHtmlParams.length > 0) {
-		vm.htmlParam = allInnerHtmlParams[0];
+	let innerHtmlParams = vm.params().filter((param) => param.typeFormatted()[0] === "innerHtml");
+	if (innerHtmlParams.length === 1) {
+		vm.htmlParam = innerHtmlParams[0];
 	}
 	else {
 		vm.htmlParam = null;
 	}
 
-	if (allInnerHtmlParams.length > 1) {
+	if (innerHtmlParams.length > 1) {
 		vm.errors.push(
-			`This component has multiple parameters of type 'InnerHTML'<br>
+			`This component has multiple parameters of type 'innerHtml'<br>
 			To fix this error change the types of all but one parameter to something else.<br>
-			Offending parameters: <b>${allInnerHtmlParams.map(function(x) { return x.name; }).join(", ")}</b>`
+			Offending parameters: <b>${innerHtmlParams.map((x) => x.name).join(", ")}</b>`
 		);
 	}
 
@@ -14549,10 +14435,21 @@ var paramVM = function(parent, construct){
 	
 	vm.value = ko.observable(construct.defaultValue);
 	vm.types = convertToArray(construct.type);
+
+	function supportedTypes(type, errorCallback) {
+		let supportedTypes = ["string", "boolean", "number", "object", "array", "function", "json", "date", "dateTime", "html", "innerHtml", "css"];
+
+		if (!supportedTypes.includes(type)) {
+			errorCallback();
+			return "Unsupported Type";
+		}
+
+		return type;
+	}
 	
 	vm.typeFormatted = ko.computed(function(){
 		return vm.types.map(function(t) {
-			return ko.types.getFormatted(t, function(){
+			return supportedTypes(t, function(){
 				parent.errors.push(
 					`<b>The type '${t}' is not supported.</b><br>
 					To fix this error change the value to the right of 'type' for the '${vm.name}' param to a <a href="https://github.com/SamKirkland/Knockout-Component-Documentor#SupportedTypes">supported type</a>.`
@@ -14561,19 +14458,18 @@ var paramVM = function(parent, construct){
 		});
 	});
 
-	vm.dataTypeClass = function(data) {
-		var typeAsString = `[object ${data}]`;
-		switch (typeAsString) {
-			case ko.types.number.baseType:
+	vm.dataTypeClass = function(type) {
+		switch (type) {
+			case "number":
 				return "colorized-number";
 				
-			case ko.types.string.baseType:
+			case "string":
 				return "colorized-string";
 				
-			case ko.types.boolean.baseType:
+			case "boolean":
 				return "colorized-boolean";
 				
-			case ko.types.array.baseType:
+			case "array":
 				return "colorized-array";
 			
 			default:
@@ -14582,7 +14478,7 @@ var paramVM = function(parent, construct){
 	};
 	
 	function convertToArray(data) {
-		if (ko.types.get(data) === ko.types.array.baseType) {
+		if (Array.isArray(data)) {
 			return data;
 		}
 		
@@ -14697,7 +14593,7 @@ ko.components.register('knockout-type-editor', {
 
 		vm.value = params.value;
 		vm.types = params.types;
-		vm.typeEditing = ko.observable(ko.types.getType(vm.types[0])); // default to first item in list
+		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
 		vm.textBinding.subscribe(function(newValue){
@@ -14705,14 +14601,15 @@ ko.components.register('knockout-type-editor', {
 				vm.value("undefined");
 				return;
 			}
-			if (ko.unwrap(vm.typeEditing) === ko.types.number.baseType) {
+
+			if (ko.unwrap(vm.typeEditing) === "number") {
 				vm.value(parseInt(newValue));
 			}
-			else if (ko.unwrap(vm.typeEditing) === ko.types.boolean.baseType) {
+			else if (ko.unwrap(vm.typeEditing) === "boolean") {
 				vm.value(JSON.parse(newValue));
 			}
 			else {
-				vm.value(ko.types.getType(newValue));
+				vm.value(newValue);
 			}
 		});
 		
@@ -14725,26 +14622,18 @@ ko.components.register('knockout-type-editor', {
 		vm.checkIfDefault = function (data) {
 			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
 		};
-		
-		vm.typeAsText = function(type) { // returns the original string or returns the second word in brackets
-			var found = ko.types.getType(type).match(/(?:\[\w+ )?(\w+)(?:\])?/i);
-			return found[1];
-			return type;
-		};
 
-		vm.colorizeData = function(data) {
-			var serialized = paramAsText(data);
-			
-			switch (ko.types.get(data)) {
-				case ko.types.number:
+		vm.colorizeData = function(type) {
+			switch (type) {
+				case "number":
 					color = "#831a05";
 					break;
 					
-				case ko.types.string:
+				case "string":
 					color = "#235712";
 					break;
 					
-				case ko.types.boolean:
+				case "boolean":
 					color = "#0d7cca";
 					break;
 				
@@ -14753,7 +14642,7 @@ ko.components.register('knockout-type-editor', {
 			}
 			
 			var isDefault = "";
-			if (data === vm.defaultValue) {
+			if (type === vm.defaultValue) {
 				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
 			}
 			
@@ -14834,7 +14723,7 @@ exports.push([module.i, "knockout-type-editor {\n  display: block; }\n", ""]);
 /* 24 */
 /***/ (function(module, exports) {
 
-module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\"\r\n\t\tdata-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $parent.typeAsText($data)\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.date) -->\r\n\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.dateTime) -->\r\n\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.array) -->\r\n\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: [true,false,true,123], uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.string) -->\r\n\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.boolean) -->\r\n\t<div class=\"radio\">\r\n\t\t<label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t</label>\r\n\t</div>\r\n\t<div class=\"radio\">\r\n\t\t<label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t</label>\r\n\t</div>\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.number) -->\r\n\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.object) ||\r\n\t\tko.types.compareType(typeEditing(), ko.types.json) ||\r\n\t\tko.types.compareType(typeEditing(), ko.types.function)\r\n\t-->\r\n\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n<!-- /ko -->\r\n<!-- ko if: ko.types.compareType(typeEditing(), ko.types.html) || ko.types.compareType(typeEditing(), ko.types.innerHtml) -->\r\n\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n<!-- /ko -->";
+module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtext=\"true\" data-show-subtext=\"true\" data-bind=\"foreach: types, value: typeEditing\">\r\n\t\t<option data-bind=\"attr: { value: $data }, text: $data\"></option>\r\n\t</select>\r\n<!-- /ko -->\r\n\r\n<!-- ko if: typeEditing() === \"date\" -->\r\n\t<input type=\"date\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"dateTime\" -->\r\n\t<input type=\"datetime-local\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"array\" -->\r\n\t<textarea class=\"html\" data-bind=\"textInput: textBinding, text: [true,false,true,123], uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"string\" -->\r\n\t<input type=\"text\" class=\"form-control\" data-bind=\"textInput: textBinding, value: defaultValue\" />\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"boolean\" -->\r\n\t<div class=\"radio\">\r\n\t\t<label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: true\" type=\"radio\" value=\"true\" /> true\r\n\t\t\t<span data-bind=\"visible: defaultValue\">*default</span>\r\n\t\t</label>\r\n\t</div>\r\n\t<div class=\"radio\">\r\n\t\t<label>\r\n\t\t\t<input data-bind=\"attr: { name: uid }, checked: value, checkedValue: false\" type=\"radio\" value=\"false\" /> false\r\n\t\t\t<span data-bind=\"visible: !defaultValue\">*default</span>\r\n\t\t</label>\r\n\t</div>\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"number\" -->\r\n\t<input type=\"number\" class=\"form-control\" data-bind=\"textInput: textBinding\" />\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"object\" ||\r\n\t\ttypeEditing() === \"json\" ||\r\n\t\ttypeEditing() === \"function\"\r\n\t-->\r\n\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'json' }\"></textarea>\r\n<!-- /ko -->\r\n<!-- ko if: typeEditing() === \"html\" || typeEditing() === \"innerHtml\" -->\r\n\t<textarea class=\"html\" data-bind=\"uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed' }\"></textarea>\r\n<!-- /ko -->";
 
 /***/ }),
 /* 25 */

@@ -127,13 +127,7 @@ If you wan't to denote that these params are observable simply wrap them in `ko.
  */
 ```
 
-All unkown types will be edited as "other"
-
-##### Knockout Types
-Knockout types are also supported by appending `.observable`, `.observableArray`, or `.computed` to the end of the type.
-Example: `ko.types.string.observable`
-
-If you attempt to a type not listed above you will get a red "Unsupported Type" message within the offending component
+All unkown types will get a red "Unsupported Type" message within the offending component
 
 
 
