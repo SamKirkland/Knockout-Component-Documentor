@@ -40,49 +40,59 @@ function jsDocTypeToComponentType(jsDocType) {
 
 function jsDocsToComponentDocs(jsDocs) {
 	let allComponents = [];
+	
+	allComponents = jsDocs
+		.filter((jsDoc) => {
+			// filter to only jsDocs that have "@component"
+			return jsDoc.customTags.find((x) => x.tag === "component") !== undefined;
+		})
+		.map((jsDoc) => {
+			let paramMapped = jsDoc.params.map((param) => {
+				// remove "params" from the front of each param
+				let paramName = param.name;
+				let regexp = /\w+\.(.*)/i;
+				if (regexp.test(paramName)) {
+					paramName = regexp.exec(paramName)[1];
+				}
 
-	// ToDo: Only export jsdocs on items that use @component
-	$.each(jsDocs, (index, jsDoc) => {
-		let paramMapped = jsDoc.params.map((param) => {
-			// remove "params" from the front of each param
-			let paramName = param.name;
-			let regexp = /\w+\.(.*)/i;
-			if (regexp.test(paramName)) {
-				paramName = regexp.exec(paramName)[1];
+				return {
+					name: paramName,
+					required: !param.optional,
+					description: param.description,
+					defaultValue: param.defaultvalue,
+					type: jsDocTypeToComponentType(param.type.names[0])
+				};
+			});
+
+			let fileName;
+			let filePath;
+
+			if (jsDoc.meta && jsDoc.meta.filename && jsDoc.meta.path) {
+				fileName = jsDoc.meta.filename;
+				filePath = jsDoc.meta.path;
 			}
 
-			return {
-				name: paramName,
-				required: !param.optional,
-				description: param.description,
-				defaultValue: param.defaultvalue,
-				type: jsDocTypeToComponentType(param.type.names[0])
+			let componentDocs = {
+				description: jsDoc.description,
+				category: jsDoc.category,
+				params: paramMapped,
+				filename: fileName,
+				filepath: filePath
 			};
+
+			jsDoc.customTags.forEach((customTag) => {
+				let tagValue = customTag.value;
+
+				if (customTag.tag === "tags") {
+					// try to convert tags to array
+					tagValue = JSON.parse(tagValue);
+				}
+				
+				componentDocs[customTag.tag] = tagValue;
+			});
+
+			return componentDocs;
 		});
-
-
-		let componentDocs = {
-			description: jsDoc.description,
-			category: jsDoc.category,
-			// ToDo: combine required and optional
-			params: paramMapped,
-			filename: jsDoc.meta.filename,
-			filepath: jsDoc.meta.path
-		};
-
-		// move all the custom tags onto the componentDocs object
-		$.each(jsDoc.customTags, (customTagsIndex, customTag) => {
-			if (customTag.tag === "tags") {
-				// try to convert tags to array
-				componentDocs[customTag.tag] = JSON.parse(customTag.value);
-			}
-			else {
-				componentDocs[customTag.tag] = customTag.value;
-			}
-		});
-
-		allComponents.push(componentDocs);
-	});
 
 	return allComponents;
 }
@@ -104,16 +114,25 @@ let componentDocumentorVM = function(params, componentInfo) {
 	}
 	else {
 		// load the jsdoc json file
-		$.getJSON(params.jsdocs.location, (jsDocs) => {
+		fetch(params.jsdocs.location)
+		.then((response) => {
+			if (!response.ok) {
+				// failed
+				alert(`Couldn't load - Status:${response.status}`);
+				return;
+			}
+			
+			return response.json();
+		})
+		.then((jsDocs) => {
 			let jsDocsMapped = jsDocsToComponentDocs(jsDocs);
 
 			// add jsDocs to component registration
-			$.each(jsDocsMapped, (index, jsDoc) => {
+			jsDocsMapped.forEach((jsDoc) => {
 				if (jsDoc.component !== undefined && componentExists(jsDoc.component)) {
 					let componentRegistration = getAllComponents()[jsDoc.component];
-
-					// merge jsDocs into docs
-					componentRegistration.docs = $.extend(true, componentRegistration.docs, jsDoc);
+					
+					componentRegistration.docs = jsDoc;
 				}
 			});
 
@@ -238,9 +257,9 @@ let componentDocumentationVM = function(parent, construct) {
 		
 		// find code instance, and update it
 		// ToDo: fix this. make it less hacky
-		let $textBoxInstance = $(`#${vm.componentID} .CodeMirror`).last();
-		if ($textBoxInstance.length) {
-			$textBoxInstance[0].CodeMirror.setValue(computedHTML);
+		let $textBoxInstance = document.querySelectorAll(`#${vm.componentID} .CodeMirror`);
+		if ($textBoxInstance.length > 0) {
+			$textBoxInstance[$textBoxInstance.length - 1].CodeMirror.setValue(computedHTML);
 		}
 		
 		return computedHTML;

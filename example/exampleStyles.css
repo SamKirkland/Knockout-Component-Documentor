@@ -1,6 +1,6 @@
 body {
 	font-family: sans-serif;
-	background: #fafafa;
+	background: #eee;
 }
 
 .group {
@@ -16,16 +16,6 @@ body {
 	height: auto;
 }
 
-
-/* Equal height */
-/*
- * Row with equal height columns
- * --------------------------------------------------
- */
-.row-eq-height {
-	display: flex;
-	flex-wrap: wrap;
-}
 
 
 
@@ -226,16 +216,17 @@ a.article, a.article:hover {
 /* ---------------------------------------------------
     CONTENT STYLE
 ----------------------------------------------------- */
-#content {
-    width: calc(100% - 250px);
-    padding: 40px;
-    min-height: 100vh;
+#knockout-components {
+    width: calc(100% - 300px);
+    padding: 20px;
     transition: all 0.3s;
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 25px;
+    right: 25px;
+    bottom: 25px;
+    overflow-y: auto;
 }
-#content.active {
+#knockout-components.active {
     width: 100%;
 }
 
@@ -250,10 +241,10 @@ a.article, a.article:hover {
     #sidebar.active {
         margin-left: 0;
     }
-    #content {
+    #knockout-components {
         width: 100%;
     }
-    #content.active {
+    #knockout-components.active {
         width: calc(100% - 250px);
     }
     #sidebarCollapse span {

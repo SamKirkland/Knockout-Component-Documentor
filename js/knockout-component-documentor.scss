@@ -7,10 +7,9 @@
 }
 
 
-.preview-max-height {
-	max-height: 90vh;
+knockout-component-documentor {
+	display: block;
 }
-
 
 .knockout-component-documentor--dataType {
 	background: rgba(0,0,0,.075);
@@ -58,29 +57,6 @@
 tr:hover .param-name {
 	background: #ccc;
 }
-
-.styled-scrollbar {
-	background-color: rgba(0,0,0,.2);
-	-webkit-background-clip: text;
-	transition: background-color .5s;
-	overflow-x: hidden;
-	overflow-y: scroll;
-}
-.styled-scrollbar:hover {
-	background-color: rgba(0,0,0,0.5);  
-}
-.styled-scrollbar::-webkit-scrollbar {
-	width: 8px;
-	height: 8px;
-}
-.styled-scrollbar::-webkit-scrollbar-track {
-	display: none;
-}
-.styled-scrollbar::-webkit-scrollbar-thumb {
-	border-radius: 10px;
-	background-color: inherit;
-}
-
 
 /* Loading when editing inner html */
 .innerHtmlLoading {

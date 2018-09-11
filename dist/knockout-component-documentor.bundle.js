@@ -11635,7 +11635,7 @@ ko.bindingHandlers.uniqueIdFunction = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 		// bind a unique ID
 		let uniqueID = idGen.getId();
-		$(element).attr("id", uniqueID);
+		element.setAttribute("id", uniqueID);
 		
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
     } 
@@ -11644,7 +11644,7 @@ ko.bindingHandlers.uniqueIdFunction = {
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 		let uniqueID = idGen.getId();
-		$(element).attr("id", uniqueID);
+		element.setAttribute("id", uniqueID);
 		valueAccessor()(uniqueID);
 	}
 };
@@ -11678,26 +11678,26 @@ ko.bindingHandlers.innerHtml = {
 		}
 
 		// save height so it's less garring
-		$(element).parent().height($(element).parent().height());
+		element.parentElement.style.height = element.parentElement.style.height;
 
 		viewModel.innerHtmlLoading(true);
 
 		// unbind
-		ko.cleanNode($(element).children().first()[0]);
+		ko.cleanNode(element.firstChild);
 		
 		// re-add
-		$(element).html(`<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`);
+		element.innerHTML = `<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`;
 		// apply the binding again
 		setTimeout(function(){
 			try {
-				ko.applyBindings(viewModel, $(element).children().first()[0]);
+				ko.applyBindings(viewModel, element.firstChild);
 			}
 			catch (e) {
 				viewModel.innerHtmlLoading(false);
 			}
 
 			// reset height to auto
-			$(element).parent().height("auto");
+			element.parentElement.style.height = "auto";
 
 			viewModel.innerHtmlLoading(false);
 		}, 100);
@@ -13967,8 +13967,10 @@ ko.components.register('documentation-search', {
 		self.components = [];
 
 		// add all registered components
-		$.each(getAllComponents(), (key, componentRegistration) => {
-			self.components.push(new link(key, componentRegistration.docs));
+		let allComponents = getAllComponents();
+		Object.keys(allComponents).forEach((key) => {
+			let component = allComponents[key];
+			self.components.push(new link(key, component.docs));
 		});
 
 		// a list of components that have no category
@@ -14157,49 +14159,59 @@ function jsDocTypeToComponentType(jsDocType) {
 
 function jsDocsToComponentDocs(jsDocs) {
 	let allComponents = [];
+	
+	allComponents = jsDocs
+		.filter((jsDoc) => {
+			// filter to only jsDocs that have "@component"
+			return jsDoc.customTags.find((x) => x.tag === "component") !== undefined;
+		})
+		.map((jsDoc) => {
+			let paramMapped = jsDoc.params.map((param) => {
+				// remove "params" from the front of each param
+				let paramName = param.name;
+				let regexp = /\w+\.(.*)/i;
+				if (regexp.test(paramName)) {
+					paramName = regexp.exec(paramName)[1];
+				}
 
-	// ToDo: Only export jsdocs on items that use @component
-	$.each(jsDocs, (index, jsDoc) => {
-		let paramMapped = jsDoc.params.map((param) => {
-			// remove "params" from the front of each param
-			let paramName = param.name;
-			let regexp = /\w+\.(.*)/i;
-			if (regexp.test(paramName)) {
-				paramName = regexp.exec(paramName)[1];
+				return {
+					name: paramName,
+					required: !param.optional,
+					description: param.description,
+					defaultValue: param.defaultvalue,
+					type: jsDocTypeToComponentType(param.type.names[0])
+				};
+			});
+
+			let fileName;
+			let filePath;
+
+			if (jsDoc.meta && jsDoc.meta.filename && jsDoc.meta.path) {
+				fileName = jsDoc.meta.filename;
+				filePath = jsDoc.meta.path;
 			}
 
-			return {
-				name: paramName,
-				required: !param.optional,
-				description: param.description,
-				defaultValue: param.defaultvalue,
-				type: jsDocTypeToComponentType(param.type.names[0])
+			let componentDocs = {
+				description: jsDoc.description,
+				category: jsDoc.category,
+				params: paramMapped,
+				filename: fileName,
+				filepath: filePath
 			};
+
+			jsDoc.customTags.forEach((customTag) => {
+				let tagValue = customTag.value;
+
+				if (customTag.tag === "tags") {
+					// try to convert tags to array
+					tagValue = JSON.parse(tagValue);
+				}
+				
+				componentDocs[customTag.tag] = tagValue;
+			});
+
+			return componentDocs;
 		});
-
-
-		let componentDocs = {
-			description: jsDoc.description,
-			category: jsDoc.category,
-			// ToDo: combine required and optional
-			params: paramMapped,
-			filename: jsDoc.meta.filename,
-			filepath: jsDoc.meta.path
-		};
-
-		// move all the custom tags onto the componentDocs object
-		$.each(jsDoc.customTags, (customTagsIndex, customTag) => {
-			if (customTag.tag === "tags") {
-				// try to convert tags to array
-				componentDocs[customTag.tag] = JSON.parse(customTag.value);
-			}
-			else {
-				componentDocs[customTag.tag] = customTag.value;
-			}
-		});
-
-		allComponents.push(componentDocs);
-	});
 
 	return allComponents;
 }
@@ -14221,16 +14233,25 @@ let componentDocumentorVM = function(params, componentInfo) {
 	}
 	else {
 		// load the jsdoc json file
-		$.getJSON(params.jsdocs.location, (jsDocs) => {
+		fetch(params.jsdocs.location)
+		.then((response) => {
+			if (!response.ok) {
+				// failed
+				alert(`Couldn't load - Status:${response.status}`);
+				return;
+			}
+			
+			return response.json();
+		})
+		.then((jsDocs) => {
 			let jsDocsMapped = jsDocsToComponentDocs(jsDocs);
 
 			// add jsDocs to component registration
-			$.each(jsDocsMapped, (index, jsDoc) => {
+			jsDocsMapped.forEach((jsDoc) => {
 				if (jsDoc.component !== undefined && componentExists(jsDoc.component)) {
 					let componentRegistration = getAllComponents()[jsDoc.component];
-
-					// merge jsDocs into docs
-					componentRegistration.docs = $.extend(true, componentRegistration.docs, jsDoc);
+					
+					componentRegistration.docs = jsDoc;
 				}
 			});
 
@@ -14355,9 +14376,9 @@ let componentDocumentationVM = function(parent, construct) {
 		
 		// find code instance, and update it
 		// ToDo: fix this. make it less hacky
-		let $textBoxInstance = $(`#${vm.componentID} .CodeMirror`).last();
-		if ($textBoxInstance.length) {
-			$textBoxInstance[0].CodeMirror.setValue(computedHTML);
+		let $textBoxInstance = document.querySelectorAll(`#${vm.componentID} .CodeMirror`);
+		if ($textBoxInstance.length > 0) {
+			$textBoxInstance[$textBoxInstance.length - 1].CodeMirror.setValue(computedHTML);
 		}
 		
 		return computedHTML;
@@ -14543,7 +14564,7 @@ exports = module.exports = __webpack_require__(0)(false);
 
 
 // module
-exports.push([module.i, ".params-list {\n  margin: 0; }\n\n.no-bottom-margin {\n  margin-bottom: 0; }\n\n.preview-max-height {\n  max-height: 90vh; }\n\n.knockout-component-documentor--dataType {\n  background: rgba(0, 0, 0, 0.075);\n  border: 1px solid rgba(0, 0, 0, 0.15);\n  color: #333;\n  padding: 3px 6px;\n  border-radius: 2px;\n  display: inline-block;\n  float: left;\n  margin: 0 4px 4px 0; }\n  .knockout-component-documentor--dataType.colorized-number {\n    background: #831a05;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-string {\n    background: #235712;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-boolean {\n    background: #0d7cca;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-array {\n    background: #661ec0;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-default {\n    background: #bbb;\n    color: #fff; }\n\n.param-name {\n  background: #ddd;\n  border-radius: 3px;\n  padding: 3px 6px; }\n\ntr:hover .param-name {\n  background: #ccc; }\n\n.styled-scrollbar {\n  background-color: rgba(0, 0, 0, 0.2);\n  -webkit-background-clip: text;\n  transition: background-color .5s;\n  overflow-x: hidden;\n  overflow-y: scroll; }\n\n.styled-scrollbar:hover {\n  background-color: rgba(0, 0, 0, 0.5); }\n\n.styled-scrollbar::-webkit-scrollbar {\n  width: 8px;\n  height: 8px; }\n\n.styled-scrollbar::-webkit-scrollbar-track {\n  display: none; }\n\n.styled-scrollbar::-webkit-scrollbar-thumb {\n  border-radius: 10px;\n  background-color: inherit; }\n\n/* Loading when editing inner html */\n.innerHtmlLoading {\n  background: #fff;\n  position: absolute;\n  z-index: 99999999999;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  left: 0; }\n", ""]);
+exports.push([module.i, ".params-list {\n  margin: 0; }\n\n.no-bottom-margin {\n  margin-bottom: 0; }\n\nknockout-component-documentor {\n  display: block; }\n\n.knockout-component-documentor--dataType {\n  background: rgba(0, 0, 0, 0.075);\n  border: 1px solid rgba(0, 0, 0, 0.15);\n  color: #333;\n  padding: 3px 6px;\n  border-radius: 2px;\n  display: inline-block;\n  float: left;\n  margin: 0 4px 4px 0; }\n  .knockout-component-documentor--dataType.colorized-number {\n    background: #831a05;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-string {\n    background: #235712;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-boolean {\n    background: #0d7cca;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-array {\n    background: #661ec0;\n    color: #fff; }\n  .knockout-component-documentor--dataType.colorized-default {\n    background: #bbb;\n    color: #fff; }\n\n.param-name {\n  background: #ddd;\n  border-radius: 3px;\n  padding: 3px 6px; }\n\ntr:hover .param-name {\n  background: #ccc; }\n\n/* Loading when editing inner html */\n.innerHtmlLoading {\n  background: #fff;\n  position: absolute;\n  z-index: 99999999999;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  left: 0; }\n", ""]);
 
 // exports
 
@@ -14704,7 +14725,7 @@ module.exports = "<!-- ko if: types.length > 1 -->\r\n\t<select data-show-subtex
 /* 25 */
 /***/ (function(module, exports) {
 
-module.exports = "<!-- ko if: !loadingComplete() -->\r\n\t<h1>Loading...</h1>\r\n<!-- /ko -->\r\n<!-- ko if: loadingComplete -->\r\n\t<div class=\"subgroup container-fluid\" data-bind=\"with: viewModel\">\r\n\t\t<div data-bind=\"attr: { 'id': componentID }\">\r\n\t\t\t<div class=\"row\">\r\n\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t<div class=\"btn-group pull-right\" role=\"group\">\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Preview' }, click: previewView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-eye-open\"></span> Preview\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Table' }, click: tableView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-list-alt\"></span> Parameters\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<h4 style=\"margin-bottom:0;\" class=\"componentTitle\" data-bind=\"text: componentName\"></h4>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<div style=\"display:inline-block;margin:5px 0 10px 0;\" data-bind=\"foreach: tags\">\r\n\t\t\t\t\t\t<span class=\"label label-default\" data-bind=\"text: $data\"></span>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<blockquote data-bind=\"visible: description, text: description\"></blockquote>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko template: { nodes: $componentTemplateNodes, data: $data } --><!-- /ko -->\r\n\r\n\t\t\t\t\t<ul style=\"padding: 10px 30px;\" class=\"alert alert-danger\" data-bind=\"foreach: errors, visible: errors().length\">\r\n\t\t\t\t\t\t<li data-bind=\"html: $data\"></li>\r\n\t\t\t\t\t</ul>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko if: view() === 'Table' && pages.length -->\r\n\t\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tIncluded on <b data-bind=\"text: pages.length\"></b> pages\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div data-bind=\"foreach: pages\" class=\"list-group\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<a style=\"float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;\"\r\n\t\t\t\t\t\t\t\t\tclass=\"list-group-item\" data-bind=\"attr: { href: $data }, text: $data\"></a>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"row row-eq-height\" data-bind=\"css: { 'preview-max-height': view() === 'Preview' }\">\r\n\t\t\t\t<!-- ko if: view() === 'Table' -->\r\n\t\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t\t<h3 style=\"display:block;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\t<table class=\"table table-striped table-bordered table-hover\">\r\n\t\t\t\t\t\t\t<thead>\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<th>Name</th>\r\n\t\t\t\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t\t\t\t<th>Type(s)</th>\r\n\t\t\t\t\t\t\t\t\t<th>Required</th>\r\n\t\t\t\t\t\t\t\t\t<th>Default</th>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</thead>\r\n\t\t\t\t\t\t\t<tbody data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<td>\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\" class=\"param-name\"></span>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: description\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"foreach: typeFormatted\">\r\n\t\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-documentor--dataType\" data-bind=\"css: $parent.dataTypeClass($data)\">\r\n\t\t\t\t\t\t\t\t\t\t\t<span data-bind=\"html: $data\"></span>\r\n\t\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: required\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: defaultValue\"></td>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</tbody>\r\n\t\t\t\t\t\t</table>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t\t<!-- ko if: view() === 'Preview' -->\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-4 no-gutter styled-scrollbar\">\r\n\t\t\t\t\t\t<div class=\"list-group params-list\" data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t<div class=\"list-group-item\">\r\n\t\t\t\t\t\t\t\t<div class=\"form-group\">\r\n\t\t\t\t\t\t\t\t\t<h3>\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\"></span>\r\n\t\t\t\t\t\t\t\t\t\t<span class=\"badge\" data-bind=\"text: typeFormatted\"></span>\r\n\t\t\t\t\t\t\t\t\t</h3>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t<p class=\"list-group-item-content\" data-bind=\"text: description\"></p>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t<knockout-type-editor params=\"\r\n\t\t\t\t\t\t\t\t\t\tvalue: value,\r\n\t\t\t\t\t\t\t\t\t\ttypes: types,\r\n\t\t\t\t\t\t\t\t\t\trequired: required,\r\n\t\t\t\t\t\t\t\t\t\tdefaultValue: defaultValue\"></knockout-type-editor>\r\n\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-8 no-gutter-right styled-scrollbar\" style=\"display:flex;flex-direction:column;\">\r\n\t\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 1 0\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">Preview</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"position: relative;\">\r\n\t\t\t\t\t\t\t\t<div data-bind=\"visible: innerHtmlLoading\" class=\"innerHtmlLoading\"></div>\r\n\t\t\t\t\t\t\t\t<!-- ko if: !blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div data-bind=\"innerHtml: htmlParam\">\r\n\t\t\t\t\t\t\t\t\t\t<div data-bind=\"component: { name: componentName, params: componentParamObject }\"></div>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t\t<!-- ko if: blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div class=\"alert alert-danger\" style=\"margin:0;\">\r\n\t\t\t\t\t\t\t\t\t\tCan't preview <b data-bind=\"text: componentName\"></b> because it's a internal component\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tInclude Tags\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: htmlInclude\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default no-bottom-margin\" style=\"flex: 0 1\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tComponent Code\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: html\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n<!-- /ko -->";
+module.exports = "<!-- ko if: !loadingComplete() -->\r\n\t<h1>Loading...</h1>\r\n<!-- /ko -->\r\n<!-- ko if: loadingComplete -->\r\n\t<div class=\"subgroup container-fluid\" data-bind=\"with: viewModel\">\r\n\t\t<div data-bind=\"attr: { 'id': componentID }\">\r\n\t\t\t<div class=\"row\">\r\n\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t<div class=\"btn-group pull-right\" role=\"group\">\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Preview' }, click: previewView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-eye-open\"></span> Preview\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t\t<button type=\"button\" class=\"btn btn-default\" data-bind=\"css: { 'active': view() === 'Table' }, click: tableView\">\r\n\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-list-alt\"></span> Parameters\r\n\t\t\t\t\t\t</button>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<h4 style=\"margin:0;\" class=\"componentTitle\" data-bind=\"text: componentName\"></h4>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<div style=\"display:inline-block;margin:5px 0 10px 0;\" data-bind=\"foreach: tags\">\r\n\t\t\t\t\t\t<span class=\"label label-default\" data-bind=\"text: $data\"></span>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<blockquote data-bind=\"visible: description, text: description\"></blockquote>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko template: { nodes: $componentTemplateNodes, data: $data } --><!-- /ko -->\r\n\r\n\t\t\t\t\t<ul style=\"padding: 10px 30px;\" class=\"alert alert-danger\" data-bind=\"foreach: errors, visible: errors().length\">\r\n\t\t\t\t\t\t<li data-bind=\"html: $data\"></li>\r\n\t\t\t\t\t</ul>\r\n\t\t\t\t\t\r\n\t\t\t\t\t<!-- ko if: view() === 'Table' && pages.length -->\r\n\t\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tIncluded on <b data-bind=\"text: pages.length\"></b> pages\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div data-bind=\"foreach: pages\" class=\"list-group\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<a style=\"float:left;border-top-width:0;border-left-width:0;border-bottom-width:0;\"\r\n\t\t\t\t\t\t\t\t\tclass=\"list-group-item\" data-bind=\"attr: { href: $data }, text: $data\"></a>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"row\">\r\n\t\t\t\t<!-- ko if: view() === 'Table' -->\r\n\t\t\t\t\t<div class=\"col-xs-12 no-gutter\">\r\n\t\t\t\t\t\t<h3 style=\"display:block;margin-top:0;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\t<table class=\"table table-striped table-bordered table-hover\">\r\n\t\t\t\t\t\t\t<thead>\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<th>Name</th>\r\n\t\t\t\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t\t\t\t<th>Type(s)</th>\r\n\t\t\t\t\t\t\t\t\t<th>Required</th>\r\n\t\t\t\t\t\t\t\t\t<th>Default</th>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</thead>\r\n\t\t\t\t\t\t\t<tbody data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t\t\t\t<td>\r\n\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\" class=\"param-name\"></span>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: description\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"foreach: typeFormatted\">\r\n\t\t\t\t\t\t\t\t\t\t<div class=\"knockout-component-documentor--dataType\" data-bind=\"css: $parent.dataTypeClass($data)\">\r\n\t\t\t\t\t\t\t\t\t\t\t<span data-bind=\"html: $data\"></span>\r\n\t\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t\t</td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: required\"></td>\r\n\t\t\t\t\t\t\t\t\t<td data-bind=\"text: defaultValue\"></td>\r\n\t\t\t\t\t\t\t\t</tr>\r\n\t\t\t\t\t\t\t</tbody>\r\n\t\t\t\t\t\t</table>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t\t<!-- ko if: view() === 'Preview' -->\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-4\" style=\"padding-left: 0;\">\r\n\t\t\t\t\t\t<h3 style=\"display:block;margin-top:0;width:100%;\">Parameters</h3>\r\n\t\t\t\t\t\t<div style=\"max-height: 650px;overflow: auto;padding-right: 5px;\">\r\n\t\t\t\t\t\t\t<div class=\"list-group params-list\" data-bind=\"foreach: params\">\r\n\t\t\t\t\t\t\t\t<div class=\"list-group-item\">\r\n\t\t\t\t\t\t\t\t\t<div class=\"form-group\">\r\n\t\t\t\t\t\t\t\t\t\t<h3>\r\n\t\t\t\t\t\t\t\t\t\t\t<span data-bind=\"text: name\"></span>\r\n\t\t\t\t\t\t\t\t\t\t\t<span class=\"badge\" data-bind=\"text: typeFormatted\"></span>\r\n\t\t\t\t\t\t\t\t\t\t</h3>\r\n\t\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t\t<p class=\"list-group-item-content\" data-bind=\"text: description\"></p>\r\n\t\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t\t<knockout-type-editor params=\"\r\n\t\t\t\t\t\t\t\t\t\t\tvalue: value,\r\n\t\t\t\t\t\t\t\t\t\t\ttypes: types,\r\n\t\t\t\t\t\t\t\t\t\t\trequired: required,\r\n\t\t\t\t\t\t\t\t\t\t\tdefaultValue: defaultValue\"></knockout-type-editor>\r\n\t\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"col-xs-6 col-lg-8\" style=\"padding: 0;\">\r\n\t\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">Preview</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"position: relative;\">\r\n\t\t\t\t\t\t\t\t<div data-bind=\"visible: innerHtmlLoading\" class=\"innerHtmlLoading\"></div>\r\n\t\t\t\t\t\t\t\t<!-- ko if: !blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div data-bind=\"innerHtml: htmlParam\">\r\n\t\t\t\t\t\t\t\t\t\t<div data-bind=\"component: { name: componentName, params: componentParamObject }\"></div>\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t\t<!-- ko if: blackListedComponent -->\r\n\t\t\t\t\t\t\t\t\t<div class=\"alert alert-danger\" style=\"margin:0;\">\r\n\t\t\t\t\t\t\t\t\t\tCan't preview <b data-bind=\"text: componentName\"></b> because it's a internal component\r\n\t\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t\t<!-- /ko -->\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tInclude Tags\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: htmlInclude\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: htmlInclude, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t<div class=\"panel panel-default no-bottom-margin\">\r\n\t\t\t\t\t\t\t<div class=\"panel-heading\">\r\n\t\t\t\t\t\t\t\tComponent Code\r\n\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\t\t<div data-bind=\"clipboard: html\" class=\"btn btn-default btn-sm pull-right\" style=\"margin-top:-5px;margin-right:-9px;\">\r\n\t\t\t\t\t\t\t\t\t<span class=\"glyphicon glyphicon-copy\"></span> Copy\r\n\t\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"panel-body\" style=\"padding:0;\">\r\n\t\t\t\t\t\t\t\t<textarea class=\"html\" data-bind=\"text: html, uniqueIdFunction: { fn: codeEditorFunction, mode: 'htmlmixed', readOnly: true }\"></textarea>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div class=\"clearfix\"></div>\r\n\t\t\t\t<!-- /ko -->\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n<!-- /ko -->";
 
 /***/ }),
 /* 26 */

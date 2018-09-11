@@ -59,8 +59,10 @@ ko.components.register('documentation-search', {
 		self.components = [];
 
 		// add all registered components
-		$.each(getAllComponents(), (key, componentRegistration) => {
-			self.components.push(new link(key, componentRegistration.docs));
+		let allComponents = getAllComponents();
+		Object.keys(allComponents).forEach((key) => {
+			let component = allComponents[key];
+			self.components.push(new link(key, component.docs));
 		});
 
 		// a list of components that have no category

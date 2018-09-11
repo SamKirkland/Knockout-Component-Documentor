@@ -19,7 +19,7 @@
 		<script src="../dist/knockout-component-documentor.bundle.js"></script>
 		<link rel="stylesheet" href="exampleStyles.css">
 		<script>
-			$(document).ready(function(){
+			document.addEventListener("DOMContentLoaded", function(event) { 
 				let pageVM = {
 					selectedComponent: ko.observable(),
 					status: ko.observable(false)
@@ -47,20 +47,18 @@
 			</nav>
 
 			<!-- Page Content Holder -->
-			<div id="content">
-				<section id="knockout-components" class="group">
-					<knockout-component-documentor params="
-						documentSelf: true,
-						componentName: selectedComponent,
-						jsdocs: { location: '../jsdocs.json', status: status },
-						includeFn: function(componentName) {
-							return `
+			<section id="knockout-components" class="group">
+				<knockout-component-documentor params="
+					documentSelf: true,
+					componentName: selectedComponent,
+					jsdocs: { location: '../jsdocs.json', status: status },
+					includeFn: function(componentName) {
+						return `
 // Add to the top of the page you would like to use the component
 <script src='/yourCustomFolder/${componentName}.js'></script>`;
-						}
-					"></knockout-component-documentor>
-				</section>
-			</div>
+					}
+				"></knockout-component-documentor>
+			</section>
 		</div>
 	</body>
 </html>

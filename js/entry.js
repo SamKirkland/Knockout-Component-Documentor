@@ -46,7 +46,7 @@ ko.bindingHandlers.uniqueIdFunction = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 		// bind a unique ID
 		let uniqueID = idGen.getId();
-		$(element).attr("id", uniqueID);
+		element.setAttribute("id", uniqueID);
 		
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
     } 
@@ -55,7 +55,7 @@ ko.bindingHandlers.uniqueIdFunction = {
 ko.bindingHandlers.addUniqueID = {
 	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 		let uniqueID = idGen.getId();
-		$(element).attr("id", uniqueID);
+		element.setAttribute("id", uniqueID);
 		valueAccessor()(uniqueID);
 	}
 };
@@ -89,26 +89,26 @@ ko.bindingHandlers.innerHtml = {
 		}
 
 		// save height so it's less garring
-		$(element).parent().height($(element).parent().height());
+		element.parentElement.style.height = element.parentElement.style.height;
 
 		viewModel.innerHtmlLoading(true);
 
 		// unbind
-		ko.cleanNode($(element).children().first()[0]);
+		ko.cleanNode(element.firstChild);
 		
 		// re-add
-		$(element).html(`<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`);
+		element.innerHTML = `<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`;
 		// apply the binding again
 		setTimeout(function(){
 			try {
-				ko.applyBindings(viewModel, $(element).children().first()[0]);
+				ko.applyBindings(viewModel, element.firstChild);
 			}
 			catch (e) {
 				viewModel.innerHtmlLoading(false);
 			}
 
 			// reset height to auto
-			$(element).parent().height("auto");
+			element.parentElement.style.height = "auto";
 
 			viewModel.innerHtmlLoading(false);
 		}, 100);
