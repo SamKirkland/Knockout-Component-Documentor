@@ -145,7 +145,7 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 };
 
 
-require("./knockout-documentation-search.js");
-require("./knockout-component-documentor.js");
-require("./random-sample-component.js");
-require("./jsdoc-sample-component.js");
+import "./knockout-documentation-search.js";
+import "./knockout-component-documentor.js";
+import "./random-sample-component.js";
+import "./jsdoc-sample-component.js";

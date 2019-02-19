@@ -1,4 +1,5 @@
-require("./knockout-type-editor.scss");
+import "./knockout-type-editor.scss";
+import * as knockoutTypeEditor from "./knockout-type-editor.html";
 
 ko.components.register('knockout-type-editor', {
 	/**
@@ -72,5 +73,5 @@ ko.components.register('knockout-type-editor', {
 		
 		return vm;
 	},
-	template: require("./knockout-type-editor.html")
+	template: knockoutTypeEditor
 });

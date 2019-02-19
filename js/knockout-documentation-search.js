@@ -1,4 +1,5 @@
-require("./knockout-documentation-search.scss");
+import "./knockout-documentation-search.scss";
+import * as knockoutDocumentationSearch from "./knockout-documentation-search.html";
 
 function getAllComponents() {
 	return ko.components.Ec;
@@ -131,5 +132,5 @@ ko.components.register('documentation-search', {
 		
 		return self;	
 	},
-	template: require("./knockout-documentation-search.html")
+	template: knockoutDocumentationSearch
 });

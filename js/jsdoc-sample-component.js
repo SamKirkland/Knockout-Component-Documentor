@@ -1,5 +1,5 @@
-require("./jsdoc-sample-component.scss");
-
+import "./jsdoc-sample-component.scss";
+import * as jsdocSampleComponent from "./jsdoc-sample-component.html";
 
 function jsDocSampleComponentVM(params) {
 	let vm = this;
@@ -26,5 +26,5 @@ ko.components.register('jsdoc-sample-component', {
 	viewModel: function(params) {
 		return new jsDocSampleComponentVM(params);
 	},
-	template: require("./jsdoc-sample-component.html")
+	template: jsdocSampleComponent
 });

@@ -1,5 +1,6 @@
-require("./knockout-component-documentor.scss");
-require("./knockout-type-editor.js");
+import "./knockout-component-documentor.scss";
+import "./knockout-type-editor.js";
+import * as knockoutComponentDocumentor from "./knockout-component-documentor.html";
 
 function getAllComponents() {
 	return ko.components.Ec;
@@ -382,5 +383,5 @@ ko.components.register('knockout-component-documentor', {
 			return new componentDocumentorVM(params, componentInfo);
 		}
 	},
-	template: require('./knockout-component-documentor.html')
+	template: knockoutComponentDocumentor
 });

@@ -1,4 +1,5 @@
-require("./random-sample-component.scss");
+import "./random-sample-component.scss";
+import * as randomSampleComponent from "./random-sample-component.html";
 
 ko.components.register('random-sample-component', {
 	/**
@@ -27,5 +28,5 @@ ko.components.register('random-sample-component', {
 
 		return vm;
 	},
-	template: require("./random-sample-component.html")
+	template: randomSampleComponent
 });
