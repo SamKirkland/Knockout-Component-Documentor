@@ -1,35 +1,41 @@
 import "./knockout-documentation-search.scss";
-import * as knockoutDocumentationSearch from "./knockout-documentation-search.html";
+import knockoutDocumentationSearch from "./knockout-documentation-search.html";
+import { getAllComponents } from "./utils";
 
-function getAllComponents() {
-	return ko.components.Ec;
+class LinkVM {
+	constructor(name: string, docs: any) {
+		this.name = name;
+	
+		this.docs = docs || {};
+		this.description = docs.description;
+		this.tags = docs.tags;
+		this.category = docs.category;
+	
+		this.visible = ko.observable(true);
+		this.isActive = ko.observable(false);
+	
+		this.click = (parentVM: any) => {
+			parentVM.components.forEach((item: any) => {
+				item.isActive(false);
+			});
+	
+			this.isActive(true);
+			parentVM.selectedComponent(this.name);
+		};
+	}
+
+	name: string;
+
+	docs: any;
+	description: string;
+	tags: string;
+	category: string;
+
+	visible: KnockoutObservable<boolean>;
+	isActive: KnockoutObservable<boolean>;
+
+	click: (parentVM: any) => void;
 }
-
-let link = function(name, docs){
-	let vm = this;
-
-	vm.name = name;
-
-	docs = docs || {};
-	vm.description = docs.description;
-	vm.tags = docs.tags;
-	vm.category = docs.category;
-
-	vm.visible = ko.observable(true);
-	vm.isActive = ko.observable(false);
-
-	vm.click = function(parent){
-		parent.components.forEach((item) => {
-			item.isActive(false);
-		});
-
-		vm.isActive(true);
-		parent.selectedComponent(vm.name);
-	};
-
-
-	return vm;
-};
 
 
 ko.components.register('documentation-search', {
@@ -63,21 +69,21 @@ ko.components.register('documentation-search', {
 		let allComponents = getAllComponents();
 		Object.keys(allComponents).forEach((key) => {
 			let component = allComponents[key];
-			self.components.push(new link(key, component.docs));
+			self.components.push(new LinkVM(key, component.docs));
 		});
 
 		// a list of components that have no category
-		self.componentsWOCategory = self.components.filter((x) => {
+		self.componentsWOCategory = self.components.filter((x: any) => {
 			return x.category === undefined;
 		});
 
 		// a list of components with categories. Grouped into there categories
 		let groupedCategories =self.components
-			.filter((x) => {
+			.filter((x: any) => {
 				return x.category !== undefined;
 			});
 
-		let group_to_values = groupedCategories.reduce((obj, item) => {
+		let group_to_values = groupedCategories.reduce((obj: any, item: any) => {
 			obj[item.category] = obj[item.category] || [];
 			obj[item.category].push(item);
 			return obj;
@@ -91,7 +97,7 @@ ko.components.register('documentation-search', {
 		if (self.selectedComponent() === undefined) {
 			self.selectedComponent(Object.keys(getAllComponents())[0]);
 			self.components
-				.find((x) => {
+				.find((x: any) => {
 					return x.name === self.selectedComponent();
 				})
 				.isActive(true);
@@ -100,7 +106,7 @@ ko.components.register('documentation-search', {
 		self.filteredLinks = ko.computed(() => {
 			let searchingText = self.searchInput().toLowerCase();
 			if (self.components !== undefined) {
-				self.components.forEach((link) => {
+				self.components.forEach((link: any) => {
 					let titleMatch;
 					let descriptionMatch;
 
@@ -117,7 +123,7 @@ ko.components.register('documentation-search', {
 					// search tags
 					let tagMatch = false;
 					if (link.tags) {
-						link.tags.forEach((tag) => {
+						link.tags.forEach((tag: any) => {
 							if (tagMatch) {
 								return false; // stop loop
 							}

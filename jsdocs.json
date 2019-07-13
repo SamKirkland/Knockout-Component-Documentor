@@ -126,11 +126,26 @@
       }
     ],
     "meta": {
-      "lineno": 20,
-      "filename": "random-sample-component.js",
+      "lineno": 25,
+      "filename": "random-sample-component.ts",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 4
+  },
+  {
+    "id": "getAllComponents",
+    "longname": "getAllComponents",
+    "name": "getAllComponents",
+    "kind": "function",
+    "scope": "global",
+    "description": "Gets all registered components",
+    "params": [],
+    "meta": {
+      "lineno": 17,
+      "filename": "utils.ts",
+      "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
+    },
+    "order": 5
   },
   {
     "id": "viewModel",
@@ -191,8 +206,8 @@
       }
     ],
     "meta": {
-      "lineno": 26,
-      "filename": "jsdoc-sample-component.js",
+      "lineno": 40,
+      "filename": "jsdoc-sample-component.ts",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 0
@@ -260,8 +275,8 @@
       }
     ],
     "meta": {
-      "lineno": 46,
-      "filename": "knockout-documentation-search.js",
+      "lineno": 61,
+      "filename": "knockout-documentation-search.ts",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 2
@@ -307,8 +322,8 @@
       }
     ],
     "meta": {
-      "lineno": 13,
-      "filename": "knockout-type-editor.js",
+      "lineno": 18,
+      "filename": "knockout-type-editor.ts",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 3
@@ -377,8 +392,8 @@
       }
     ],
     "meta": {
-      "lineno": 382,
-      "filename": "knockout-component-documentor.js",
+      "lineno": 435,
+      "filename": "knockout-component-documentor.ts",
       "path": "C:\\Users\\Sam\\Documents\\GitHub\\Knockout-Component-Documentor\\js"
     },
     "order": 1

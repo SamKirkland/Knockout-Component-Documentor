@@ -1,5 +1,5 @@
 import "./random-sample-component.scss";
-import * as randomSampleComponent from "./random-sample-component.html";
+import randomSampleComponent from "./random-sample-component.html";
 
 ko.components.register('random-sample-component', {
 	/**

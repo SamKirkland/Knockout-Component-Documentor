@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "webpack --config webpack.config.js",
-    "document-components": "jsdoc2md js/*.js --json > jsdocs.json"
+    "document-components": "jsdoc2md --configure ./jsdoc2md.json --files js/* --json > jsdocs.json"
   },
   "repository": {
     "type": "git",
@@ -38,8 +38,22 @@
     "sass-loader": "7.1.0",
     "style-loader": "0.23.1",
     "html-loader": "0.5.5",
+    "jsdoc-babel": "0.5.0",
     "webpack": "4.35.0",
     "webpack-cli": "3.3.5",
-    "webpack-shell-plugin": "0.5.0"
+    "webpack-shell-plugin": "0.5.0",
+    "typescript": "3.5.2",
+    "ts-loader": "6.0.4",
+    "@babel/cli": "7.4.4",
+    "@babel/core": "7.4.5",
+    "@babel/preset-env": "7.4.5",
+    "@babel/preset-typescript": "7.3.3",
+    "@babel/plugin-proposal-class-properties": "7.4.4",
+    "@babel/plugin-proposal-object-rest-spread": "7.4.4",
+    "@types/codemirror": "0.0.76",
+    "@types/jsdoc-to-markdown": "4.0.0",
+    "@types/clipboard": "2.0.1",
+    "@types/webpack": "4.4.34",
+    "@types/knockout": "3.4.66"
   }
 }

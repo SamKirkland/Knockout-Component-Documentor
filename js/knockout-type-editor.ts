@@ -1,5 +1,5 @@
 import "./knockout-type-editor.scss";
-import * as knockoutTypeEditor from "./knockout-type-editor.html";
+import knockoutTypeEditor from "./knockout-type-editor.html";
 
 ko.components.register('knockout-type-editor', {
 	/**
@@ -18,7 +18,7 @@ ko.components.register('knockout-type-editor', {
 		vm.typeEditing = ko.observable(vm.types[0]); // default to first item in list
 		
 		vm.textBinding = ko.observable();
-		vm.textBinding.subscribe((newValue) => {
+		vm.textBinding.subscribe((newValue: any) => {
 			if (newValue === undefined || newValue.length === 0) {
 				vm.value("undefined");
 				return;
@@ -39,13 +39,14 @@ ko.components.register('knockout-type-editor', {
 		vm.defaultValue = params.defaultValue;
 		
 		
-		vm.uid = idGen.getId();
+		vm.uid = window.idGen.getId();
 		
-		vm.checkIfDefault = function (data) {
+		vm.checkIfDefault = function (data: any) {
 			return vm.defaultValue === data; // hacky conversion to string. ToDo: fix
 		};
 
-		vm.colorizeData = function(type) {
+		vm.colorizeData = function(type: string) {
+			let color;
 			switch (type) {
 				case "number":
 					color = "#831a05";
@@ -68,7 +69,7 @@ ko.components.register('knockout-type-editor', {
 				isDefault = `<span style='float:right;margin-right:10px;'>*default*</span>`;
 			}
 			
-			return `<span style='color:${color};'>${serialized}</span>${isDefault}`;
+			return `<span style='color:${color};'>${JSON.stringify(vm.types)}</span>${isDefault}`;
 		};
 		
 		return vm;

@@ -1,0 +1,32 @@
+{
+    "source": {
+        "includePattern": ".*.(js|jsx|ts|tsx)$"
+    },
+    "plugins": [
+        "node_modules/jsdoc-babel"
+    ],
+    "babel": {
+        "extensions": [
+            "ts",
+            "tsx",
+            "js",
+            "jsx"
+        ],
+        "babelrc": false,
+        "presets": [
+            [
+                "@babel/preset-env",
+                {
+                    "targets": {
+                        "node": true
+                    }
+                }
+            ],
+            "@babel/preset-typescript"
+        ],
+        "plugins": [
+            "@babel/proposal-class-properties",
+            "@babel/proposal-object-rest-spread"
+        ]
+    }
+}

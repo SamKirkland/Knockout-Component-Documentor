@@ -1,25 +1,48 @@
-import CodeMirror from "codemirror/lib/codemirror.js";
-import "codemirror/lib/codemirror.css";
-import "codemirror/theme/mdn-like.css";
+import * as CodeMirror from 'codemirror';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/mdn-like.css';
+import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/mode/xml/xml.js';
+import 'codemirror/mode/htmlmixed/htmlmixed.js';
 
-import Clipboard from "clipboard";
+import * as ClipboardJS from 'clipboard';
 
-import js from 'codemirror/mode/javascript/javascript.js';
-import xml from 'codemirror/mode/xml/xml.js';
-import htmlmixed from 'codemirror/mode/htmlmixed/htmlmixed.js';
+class knockoutType {
+	constructor(baseType: string) {
+		this.baseType = baseType;
 
-function knockoutType(baseType) {
-	this.baseType = baseType;
+		this.observable = `${baseType} observable`;
+		this.observableArray = `${baseType} observableArray`;
+		this.computed = `${baseType} computed`;
+	}
 
-	// knockout types
-	this.observable = `${baseType} observable`;
-	this.observableArray = `${baseType} observableArray`;
-	this.computed = `${baseType} computed`;
-
-	return this;
+	baseType: string;
+	observable: string;
+	observableArray: string;
+	computed: string;
 }
 
-window.paramAsText = function(property) {
+class Generator {
+	rand = () => {
+		return Math.floor(Math.random() * 26) + Date.now();
+	}
+
+	getId = () => {
+		return 'uniqueID_' + (this.rand() + 1);
+	}
+}
+
+declare global {
+    interface Window {
+		idGen: Generator;
+		paramAsText: (property: any) => string;
+		codeEditorFunction: (element: any, valueAccessor: any, allBindings: any, viewModel: any, bindingContext: any) => void;
+	}
+}
+
+window.idGen = new Generator();
+
+window.paramAsText = function(property: any) {
 	if (property === undefined) {
 		return "undefined";
 	}
@@ -31,21 +54,12 @@ window.paramAsText = function(property) {
 	return JSON.stringify(property);
 }
 
-
-function Generator() {};
-Generator.prototype.rand =  Math.floor(Math.random() * 26) + Date.now();
-Generator.prototype.getId = function() { return 'uniqueID_' + this.rand++; };
-window.idGen = new Generator();
-
-
-
-
 // Create uniqueID and run function
 // pass a function that accepts the params (element, allBindings, viewModel, bindingContext)
 ko.bindingHandlers.uniqueIdFunction = {
-    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+    init: (element, valueAccessor, allBindings, viewModel, bindingContext) => {
 		// bind a unique ID
-		let uniqueID = idGen.getId();
+		let uniqueID = window.idGen.getId();
 		element.setAttribute("id", uniqueID);
 		
 		ko.unwrap(valueAccessor)().fn(element, valueAccessor, allBindings, viewModel, bindingContext);
@@ -53,27 +67,32 @@ ko.bindingHandlers.uniqueIdFunction = {
 };
 
 ko.bindingHandlers.addUniqueID = {
-	init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-		let uniqueID = idGen.getId();
+	init: (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) => {
+		let uniqueID = window.idGen.getId();
 		element.setAttribute("id", uniqueID);
 		valueAccessor()(uniqueID);
 	}
 };
 
 ko.bindingHandlers.clipboard = {
-	init: function(el, valueAccessor, allBindings, data, context) {
-		new Clipboard(el, {
-			text: function(trigger) {
-				return ko.unwrap(valueAccessor());
-			}
-		}).on('success', function(e) {
-			$(e.trigger).addClass("btn-success").find("span")
-				.removeClass("glyphicon-copy")
-				.addClass("glyphicon-ok");
-			setTimeout(function(){
-				$(e.trigger).removeClass("btn-success").find("span")
-					.addClass("glyphicon-copy")
-					.removeClass("glyphicon-ok");
+	init: (el, valueAccessor, allBindings, data, context) => {
+		new ClipboardJS(el, {
+			text: (trigger) => ko.unwrap(valueAccessor())
+		}).on('success', (e) => {
+			const trigger = e.trigger;
+			trigger.classList.add("btn-success");
+
+			// show copied icon
+			const copyIcon = trigger.querySelector("span");
+			copyIcon.classList.remove("glyphicon-copy");
+			copyIcon.classList.add("glyphicon-ok");
+
+			// revert copy button
+			setTimeout(() => {
+				trigger.classList.remove("btn-success");
+
+				copyIcon.classList.add("glyphicon-copy");
+				copyIcon.classList.remove("glyphicon-ok");
 			}, 750);
 		});
 	}
@@ -99,7 +118,7 @@ ko.bindingHandlers.innerHtml = {
 		// re-add
 		element.innerHTML = `<div data-bind='component: { name: componentName, params: componentParamObject }'>${valueUnwrapped.value()}</div>`;
 		// apply the binding again
-		setTimeout(function(){
+		setTimeout(() => {
 			try {
 				ko.applyBindings(viewModel, element.firstChild);
 			}
@@ -132,7 +151,6 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 		readOnly: bindingParams.readOnly,
 		lineWrapping: true,
 		indentWithTabs: true,
-		matchBrackets: true,
 		theme: "mdn-like"
 	});
 	
@@ -145,7 +163,7 @@ window.codeEditorFunction = function(element, valueAccessor, allBindings, viewMo
 };
 
 
-import "./knockout-documentation-search.js";
-import "./knockout-component-documentor.js";
-import "./random-sample-component.js";
-import "./jsdoc-sample-component.js";
+import "./knockout-documentation-search.ts";
+import "./knockout-component-documentor.ts";
+import "./random-sample-component.ts";
+import "./jsdoc-sample-component.ts";
